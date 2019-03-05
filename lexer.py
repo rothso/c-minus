@@ -3,7 +3,8 @@ import re
 scanner = re.Scanner([
     (r'\(', lambda _, token: ('PUNCTUATION', '(')),
     (r'\)', lambda _, token: ('PUNCTUATION', ')')),
-    (r'[0-9]+\.[0-9]+', lambda _, token: ('FLOAT', token)),
+    (r'\+', lambda _, token: ('OPERATOR', '+')),
+    (r'(?=\d*[.eE][0-9]+)[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?', lambda _, token: ('FLOAT', token)),
     (r'[0-9]+', lambda _, token: ('INTEGER', token)),
     (r'.', lambda _, token: ('INVALID', token))
 ])

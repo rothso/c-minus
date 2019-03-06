@@ -43,7 +43,7 @@ class TestFloats(object):
         assert lexer.lex('.E') == [('INVALID', '.'), ('IDENTIFIER', 'E')]
 
     def test_doesnt_read_incomplete_scientific_notation_as_float(self):
-        assert lexer.lex('6.0E+') == [('FLOAT', '6.0'), ('IDENTIFIER', 'E'), ('OPERATOR', '+')]
+        assert lexer.lex('6.0E+') == [('FLOAT', '6.0'), ('IDENTIFIER', 'E'), ('MATHOP', '+')]
 
 
 class TestWhitespace:
@@ -125,3 +125,80 @@ class TestComments:
         assert lexer.lex('''1
                             // ignore me
                             2''') == [('INTEGER', '1'), ('INTEGER', '2')]
+
+class TestIntegration:
+
+    def test_tokenizes_eggens_sample_input(self):
+        assert lexer.lex('''
+          /**/          /*/* */   */
+          /*/*/****This**********/*/    */
+          /**************/
+          /*************************
+          i = 333;        ******************/
+    
+          iiii = 3@33;
+    
+          int g 4 cd (int u, int v)      {
+          if(v == >= 0) return/*a comment*/ u;
+          else ret_urn gcd(vxxxxxxvvvvv, u-u/v*v);
+                /* u-u/v*v == u mod v*/
+          !
+          }
+    
+          return void while       void main()
+        ''') == [
+            ('IDENTIFIER', 'iiii'),
+            ('OPERATOR', '='),
+            ('INTEGER', '3'),
+            ('INVALID', '@'),
+            ('INTEGER', '33'),
+            ('PUNCTUATION', ';'),
+            ('KEYWORD', 'int'),
+            ('IDENTIFIER', 'g'),
+            ('INTEGER', '4'),
+            ('IDENTIFIER', 'cd'),
+            ('PUNCTUATION', '('),
+            ('KEYWORD', 'int'),
+            ('IDENTIFIER', 'u'),
+            ('PUNCTUATION', ','),
+            ('KEYWORD', 'int'),
+            ('IDENTIFIER', 'v'),
+            ('PUNCTUATION', ')'),
+            ('PUNCTUATION', '{'),
+            ('KEYWORD', 'if'),
+            ('PUNCTUATION', '('),
+            ('IDENTIFIER', 'v'),
+            ('EQUALITYOP', '=='),
+            ('EQUALITYOP', '>='),
+            ('INTEGER', '0'),
+            ('PUNCTUATION', ')'),
+            ('KEYWORD', 'return'),
+            ('IDENTIFIER', 'u'),
+            ('PUNCTUATION', ';'),
+            ('KEYWORD', 'else'),
+            ('IDENTIFIER', 'ret'),
+            ('INVALID', '_'),
+            ('IDENTIFIER', 'urn'),
+            ('IDENTIFIER', 'gcd'),
+            ('PUNCTUATION', '('),
+            ('IDENTIFIER', 'vxxxxxxvvvvv'),
+            ('PUNCTUATION', ','),
+            ('IDENTIFIER', 'u'),
+            ('MATHOP', '-'),
+            ('IDENTIFIER', 'u'),
+            ('MATHOP', '/'),
+            ('IDENTIFIER', 'v'),
+            ('MATHOP', '*'),
+            ('IDENTIFIER', 'v'),
+            ('PUNCTUATION', ')'),
+            ('PUNCTUATION', ';'),
+            ('INVALID', '!'),
+            ('PUNCTUATION', '}'),
+            ('KEYWORD', 'return'),
+            ('KEYWORD', 'void'),
+            ('KEYWORD', 'while'),
+            ('KEYWORD', 'void'),
+            ('IDENTIFIER', 'main'),
+            ('PUNCTUATION', '('),
+            ('PUNCTUATION', ')'),
+        ]

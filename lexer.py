@@ -1,19 +1,30 @@
 import re
 
 scanner = re.Scanner([
+    (r'\s+', lambda _, token: None),  # ignore whitespace
+    (r'//.*\n', lambda _, token: None),  # ignore line comment
     (r'\(', lambda _, token: ('PUNCTUATION', '(')),
     (r'\)', lambda _, token: ('PUNCTUATION', ')')),
     (r'\[', lambda _, token: ('PUNCTUATION', '[')),
     (r'\]', lambda _, token: ('PUNCTUATION', ']')),
     (r'\{', lambda _, token: ('PUNCTUATION', '{')),
     (r'\}', lambda _, token: ('PUNCTUATION', '}')),
-    (r'\+', lambda _, token: ('OPERATOR', '+')),
+    (r',', lambda _, token: ('PUNCTUATION', ',')),
+    (r';', lambda _, token: ('PUNCTUATION', ';')),
+    (r'==', lambda _, token: ('EQUALITYOP', '==')),
+    (r'>=', lambda _, token: ('EQUALITYOP', '>=')),
+    (r'<=', lambda _, token: ('EQUALITYOP', '<=')),
+    (r'>', lambda _, token: ('EQUALITYOP', '>')),
+    (r'<', lambda _, token: ('EQUALITYOP', '<')),
+    (r'\+', lambda _, token: ('MATHOP', '+')),
+    (r'\-', lambda _, token: ('MATHOP', '-')),
+    (r'/', lambda _, token: ('MATHOP', '/')),
+    (r'\*', lambda _, token: ('MATHOP', '*')),
+    (r'=', lambda _, token: ('OPERATOR', '=')),
     (r'(?=\d*[.eE]\d+)\d+(\.\d+)?([eE][+-]?\d+)?', lambda _, token: ('FLOAT', token)),
     (r'\d+', lambda _, token: ('INTEGER', token)),
     (r'int|float|void|while|if|else|return', lambda _, token: ('KEYWORD', token)),
     (r'[a-zA-Z]+', lambda _, token: ('IDENTIFIER', token)),
-    (r'\s+', lambda _, token: None),  # ignore whitespace
-    (r'//.*\n', lambda _, token: None),  # ignore line comment
     (r'.', lambda _, token: ('INVALID', token)),
 ])
 

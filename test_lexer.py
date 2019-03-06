@@ -103,3 +103,25 @@ class TestCommentStripper:
 
     def test_doesnt_interpret_multiply_divide_as_closing_comment(self):
         assert lexer.strip_comments("a/*c*/*/b") == 'a*/b'
+
+
+class TestComments:
+
+    def test_ignores_comments(self):
+        assert lexer.lex('1/*comment*/1') == [('INTEGER', '11')]
+
+    def test_ignores_nested_comments(self):
+        assert lexer.lex('1/*co/*e*/nt*/1') == [('INTEGER', '11')]
+
+    def test_ignores_comments_containing_spaces(self):
+        assert lexer.lex('/**/          /*/* */   */') == []
+
+    def test_ignores_multiline_comments(self):
+        assert lexer.lex('''/**************/
+                            /*************************
+                            i = 333;        ******************/''') == []
+
+    def test_ignores_line_comments(self):
+        assert lexer.lex('''1
+                            // ignore me
+                            2''') == [('INTEGER', '1'), ('INTEGER', '2')]

@@ -3,23 +3,9 @@ import re
 scanner = re.Scanner([
     (r'\s+', lambda _, token: None),  # ignore whitespace
     (r'//.*\n', lambda _, token: None),  # ignore line comment
-    (r'\(', lambda _, token: ('PUNCTUATION', '(')),
-    (r'\)', lambda _, token: ('PUNCTUATION', ')')),
-    (r'\[', lambda _, token: ('PUNCTUATION', '[')),
-    (r'\]', lambda _, token: ('PUNCTUATION', ']')),
-    (r'\{', lambda _, token: ('PUNCTUATION', '{')),
-    (r'\}', lambda _, token: ('PUNCTUATION', '}')),
-    (r',', lambda _, token: ('PUNCTUATION', ',')),
-    (r';', lambda _, token: ('PUNCTUATION', ';')),
-    (r'==', lambda _, token: ('EQUALITYOP', '==')),
-    (r'>=', lambda _, token: ('EQUALITYOP', '>=')),
-    (r'<=', lambda _, token: ('EQUALITYOP', '<=')),
-    (r'>', lambda _, token: ('EQUALITYOP', '>')),
-    (r'<', lambda _, token: ('EQUALITYOP', '<')),
-    (r'\+', lambda _, token: ('MATHOP', '+')),
-    (r'\-', lambda _, token: ('MATHOP', '-')),
-    (r'/', lambda _, token: ('MATHOP', '/')),
-    (r'\*', lambda _, token: ('MATHOP', '*')),
+    (r'\(|\)|\[|\]|\{|\}|,|;', lambda _, token: ('PUNCTUATION', token)),
+    (r'==|>=|<=|>|<', lambda _, token: ('EQUALITYOP', token)),
+    (r'\+|-|/|\*', lambda _, token: ('MATHOP', token)),
     (r'=', lambda _, token: ('OPERATOR', '=')),
     (r'(?=\d*[.eE]\d+)\d+(\.\d+)?([eE][+-]?\d+)?', lambda _, token: ('FLOAT', token)),
     (r'\d+', lambda _, token: ('INTEGER', token)),
@@ -46,5 +32,4 @@ def strip_comments(string: str):
 
 
 def lex(string: str):
-    results, remainder = scanner.scan(strip_comments(string))
-    return results
+    return scanner.scan(strip_comments(string))[0]

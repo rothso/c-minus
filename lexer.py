@@ -3,10 +3,17 @@ import re
 scanner = re.Scanner([
     (r'\(', lambda _, token: ('PUNCTUATION', '(')),
     (r'\)', lambda _, token: ('PUNCTUATION', ')')),
+    (r'\[', lambda _, token: ('PUNCTUATION', '[')),
+    (r'\]', lambda _, token: ('PUNCTUATION', ']')),
+    (r'\{', lambda _, token: ('PUNCTUATION', '{')),
+    (r'\}', lambda _, token: ('PUNCTUATION', '}')),
     (r'\+', lambda _, token: ('OPERATOR', '+')),
-    (r'(?=\d*[.eE][0-9]+)[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?', lambda _, token: ('FLOAT', token)),
-    (r'[0-9]+', lambda _, token: ('INTEGER', token)),
-    (r'.', lambda _, token: ('INVALID', token))
+    (r'(?=\d*[.eE]\d+)\d+(\.\d+)?([eE][+-]?\d+)?', lambda _, token: ('FLOAT', token)),
+    (r'\d+', lambda _, token: ('INTEGER', token)),
+    (r'int|float|void|while|if|else|return', lambda _, token: ('KEYWORD', token)),
+    (r'[a-zA-Z]+', lambda _, token: ('IDENTIFIER', token)),
+    (r'\s+', lambda _, token: None),  # ignore whitespace
+    (r'.', lambda _, token: ('INVALID', token)),
 ])
 
 

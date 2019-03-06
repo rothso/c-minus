@@ -37,10 +37,51 @@ class TestFloats(object):
         assert lexer.lex('1E2') == [('FLOAT', '1E2')]
 
     def test_doesnt_read_float_with_trailing_e(self):
-        assert lexer.lex('4.0E') == [('FLOAT', '4.0'), ('INVALID', 'E')]
+        assert lexer.lex('4.0E') == [('FLOAT', '4.0'), ('IDENTIFIER', 'E')]
 
     def test_doesnt_read_e_as_float(self):
-        assert lexer.lex('.E') == [('INVALID', '.'), ('INVALID', 'E')]
+        assert lexer.lex('.E') == [('INVALID', '.'), ('IDENTIFIER', 'E')]
 
     def test_doesnt_read_incomplete_scientific_notation_as_float(self):
-        assert lexer.lex('6.0E+') == [('FLOAT', '6.0'), ('INVALID', 'E'), ('OPERATOR', '+')]
+        assert lexer.lex('6.0E+') == [('FLOAT', '6.0'), ('IDENTIFIER', 'E'), ('OPERATOR', '+')]
+
+
+class TestWhitespace:
+
+    def test_ignores_whitespace(self):
+        assert lexer.lex(' 1\t1\n\r ') == [('INTEGER', '1'), ('INTEGER', '1')]
+
+
+class TestIdentifiers:
+
+    def test_recognizes_keywords(self):
+        assert lexer.lex('int float void while if else return') == [
+            ('KEYWORD', 'int'),
+            ('KEYWORD', 'float'),
+            ('KEYWORD', 'void'),
+            ('KEYWORD', 'while'),
+            ('KEYWORD', 'if'),
+            ('KEYWORD', 'else'),
+            ('KEYWORD', 'return'),
+        ]
+
+    def test_reads_identifiers(self):
+        assert lexer.lex('a bba') == [('IDENTIFIER', 'a'), ('IDENTIFIER', 'bba')]
+
+    def test_reads_identifiers_containing_capital_letters(self):
+        assert lexer.lex('aBC AAA') == [('IDENTIFIER', 'aBC'), ('IDENTIFIER', 'AAA')]
+
+    def test_reads_identifiers_followed_by_numbers(self):
+        assert lexer.lex('abc99') == [('IDENTIFIER', 'abc'), ('INTEGER', '99')]
+
+
+class TestBrackets:
+
+    def test_reads_brackets(self):
+        assert lexer.lex('[]') == [('PUNCTUATION', '['), ('PUNCTUATION', ']')]
+
+    def test_reads_parentheses(self):
+        assert lexer.lex('()') == [('PUNCTUATION', '('), ('PUNCTUATION', ')')]
+
+    def test_reads_braces(self):
+        assert lexer.lex('{}') == [('PUNCTUATION', '{'), ('PUNCTUATION', '}')]

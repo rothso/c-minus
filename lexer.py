@@ -1,5 +1,24 @@
 import re
 
+
+def strip_comments(string: str):
+    s = ''
+    depth = 0
+    string += " "
+    it = iter(range(len(string) - 1))
+    for i in it:
+        peek2 = string[i] + string[i + 1]
+        if peek2 == '/*':
+            depth += 1
+            next(it)
+        elif peek2 == '*/' and depth > 0:
+            depth -= 1
+            next(it)
+        elif depth == 0:
+            s += string[i]
+    return s
+
+
 scanner = re.Scanner([
     (r'\(', lambda _, token: ('PUNCTUATION', '(')),
     (r'\)', lambda _, token: ('PUNCTUATION', ')')),

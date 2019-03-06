@@ -85,3 +85,21 @@ class TestBrackets:
 
     def test_reads_braces(self):
         assert lexer.lex('{}') == [('PUNCTUATION', '{'), ('PUNCTUATION', '}')]
+
+
+class TestCommentStripper:
+
+    def test_strips_comments(self):
+        assert lexer.strip_comments('/*c*/') == ''
+
+    def test_keeps_code_around_comments(self):
+        assert lexer.strip_comments("a/*c*/a") == 'aa'
+
+    def test_strips_unclosed_comments(self):
+        assert lexer.strip_comments("a/*/*c*/ab") == 'a'
+
+    def test_strips_nested_comments(self):
+        assert lexer.strip_comments("a/*/*c*/*/b") == 'ab'
+
+    def test_doesnt_interpret_multiply_divide_as_closing_comment(self):
+        assert lexer.strip_comments("a/*c*/*/b") == 'a*/b'

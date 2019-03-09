@@ -11,7 +11,7 @@ scanner = re.Scanner([
     (r'(?=\d*[.eE][+-]?\d+)\d+(\.\d+)?([eE][+-]?\d+)?', lambda _, token: Token('FLOAT', token)),
     (r'\d+', lambda _, token: Token('INTEGER', token)),
     (r'int|float|void|while|if|else|return', lambda _, token: Token('KEYWORD', token)),
-    (r'[a-zA-Z]+', lambda _, token: Token('IDENTIFIER', token)),
+    (r'[a-zA-Z]+', lambda _, token: Token('ID', token)),
     (r'.', lambda _, token: Token('INVALID', token)),
 ])
 

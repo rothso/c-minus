@@ -59,7 +59,7 @@ class CMinusParser:
     # declaration -> type-specifier ID declaration'
     def declaration(self):
         self.type_specifier()
-        self.accept_type('IDENTIFIER')
+        self.accept_type('ID')
         self.declaration_()
 
     # declaration' -> var-declaration ; | ( params ) compound-stmt
@@ -95,7 +95,7 @@ class CMinusParser:
     def params(self):
         if self.next().val in ['int', 'float']:
             self.accept_val(self.next().val)
-            self.accept_type('IDENTIFIER')
+            self.accept_type('ID')
             self.param_()
             self.param_list()
         elif self.next().val == 'void':
@@ -104,8 +104,8 @@ class CMinusParser:
 
     # params' -> ID param' param-list | ϵ
     def params_(self):
-        if self.next().type == 'IDENTIFIER':
-            self.accept_type('IDENTIFIER')
+        if self.next().type == 'ID':
+            self.accept_type('ID')
             self.param_()
             self.param_list()
 
@@ -119,7 +119,7 @@ class CMinusParser:
     # param -> type-specifier ID param'
     def param(self):
         self.type_specifier()
-        self.accept_type('IDENTIFIER')
+        self.accept_type('ID')
         self.param_()
 
     # param' -> [] | ϵ
@@ -139,7 +139,7 @@ class CMinusParser:
     def local_declarations(self):
         if self.next().val in ['int', 'float', 'void']:
             self.type_specifier()
-            self.accept_type('IDENTIFIER')
+            self.accept_type('ID')
             self.var_declaration()
             self.accept_val(';')
             self.local_declarations()
@@ -147,13 +147,13 @@ class CMinusParser:
     # statement-list -> statement statement-list | ϵ
     def statement_list(self):
         if self.next().val in ['(', ';', 'if', 'return', 'while', '{'] or (
-                self.next().type in ['IDENTIFIER', 'INTEGER', 'FLOAT']):
+                self.next().type in ['ID', 'INTEGER', 'FLOAT']):
             self.statement()
             self.statement_list()
 
     # statement -> expression-stmt | compound-stmt | selection-stmt | iteration-stmt | return-stmt
     def statement(self):
-        if self.next().val in ['(', ';'] or self.next().type in ['IDENTIFIER', 'INTEGER', 'FLOAT']:
+        if self.next().val in ['(', ';'] or self.next().type in ['ID', 'INTEGER', 'FLOAT']:
             self.expression_stmt()
         elif self.next().val == '{':
             self.compound_stmt()
@@ -166,7 +166,7 @@ class CMinusParser:
 
     # expression-stmt -> expression ; | ;
     def expression_stmt(self):
-        if self.next().val == '(' or self.next().type in ['IDENTIFIER', 'INTEGER', 'FLOAT']:
+        if self.next().val == '(' or self.next().type in ['ID', 'INTEGER', 'FLOAT']:
             self.expression()
         self.accept_val(';')
 
@@ -201,13 +201,13 @@ class CMinusParser:
 
     # return-stmt' -> expression | ϵ
     def return_stmt_(self):
-        if self.next().val == '(' or self.next().type in ['IDENTIFIER', 'INTEGER', 'FLOAT']:
+        if self.next().val == '(' or self.next().type in ['ID', 'INTEGER', 'FLOAT']:
             self.expression()
 
     # expression -> ID expression' | ( expression ) expression''' | NUM expression'''
     def expression(self):
-        if self.next().type == 'IDENTIFIER':
-            self.accept_type('IDENTIFIER')
+        if self.next().type == 'ID':
+            self.accept_type('ID')
             self.expression_()
         else:
             if self.next().val == '(':
@@ -245,7 +245,7 @@ class CMinusParser:
 
     # var -> ID var'
     def var(self):
-        self.accept_type('IDENTIFIER')
+        self.accept_type('ID')
         self.var_()
 
     # var' -> [ expression ] | ϵ
@@ -303,8 +303,8 @@ class CMinusParser:
             self.accept_val('(')
             self.expression()
             self.accept_val(')')
-        elif self.next().type == 'IDENTIFIER':
-            self.accept_type('IDENTIFIER')
+        elif self.next().type == 'ID':
+            self.accept_type('ID')
             self.factor_()
         else:
             self.number()
@@ -320,14 +320,14 @@ class CMinusParser:
 
     # call -> ID ( args )
     def call(self):
-        self.accept_type('IDENTIFIER')
+        self.accept_type('ID')
         self.accept_val('(')
         self.args()
         self.accept_val(')')
 
     # args -> arg-list | ϵ
     def args(self):
-        if self.next().val == '(' or self.next().type in ['IDENTIFIER', 'INTEGER', 'FLOAT']:
+        if self.next().val == '(' or self.next().type in ['ID', 'INTEGER', 'FLOAT']:
             self.arg_list()
 
     # arg-list -> expression arg-list'

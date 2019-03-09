@@ -40,13 +40,13 @@ class TestFloats(object):
         assert lexer.lex('1E-2') == [('FLOAT', '1E-2')]
 
     def test_doesnt_read_float_with_trailing_e(self):
-        assert lexer.lex('4.0E') == [('FLOAT', '4.0'), ('IDENTIFIER', 'E')]
+        assert lexer.lex('4.0E') == [('FLOAT', '4.0'), ('ID', 'E')]
 
     def test_doesnt_read_e_as_float(self):
-        assert lexer.lex('.E') == [('INVALID', '.'), ('IDENTIFIER', 'E')]
+        assert lexer.lex('.E') == [('INVALID', '.'), ('ID', 'E')]
 
     def test_doesnt_read_incomplete_scientific_notation_as_float(self):
-        assert lexer.lex('6.0E+') == [('FLOAT', '6.0'), ('IDENTIFIER', 'E'), ('MATHOP', '+')]
+        assert lexer.lex('6.0E+') == [('FLOAT', '6.0'), ('ID', 'E'), ('MATHOP', '+')]
 
 
 class TestWhitespace:
@@ -69,13 +69,13 @@ class TestIdentifiers:
         ]
 
     def test_reads_identifiers(self):
-        assert lexer.lex('a bba') == [('IDENTIFIER', 'a'), ('IDENTIFIER', 'bba')]
+        assert lexer.lex('a bba') == [('ID', 'a'), ('ID', 'bba')]
 
     def test_reads_identifiers_containing_capital_letters(self):
-        assert lexer.lex('aBC AAA') == [('IDENTIFIER', 'aBC'), ('IDENTIFIER', 'AAA')]
+        assert lexer.lex('aBC AAA') == [('ID', 'aBC'), ('ID', 'AAA')]
 
     def test_reads_identifiers_followed_by_numbers(self):
-        assert lexer.lex('abc99') == [('IDENTIFIER', 'abc'), ('INTEGER', '99')]
+        assert lexer.lex('abc99') == [('ID', 'abc'), ('INTEGER', '99')]
 
 
 class TestBrackets:
@@ -151,49 +151,49 @@ class TestIntegration:
     
           return void while       void main()
         ''') == [
-            ('IDENTIFIER', 'iiii'),
+            ('ID', 'iiii'),
             ('PUNCTUATION', '='),
             ('INTEGER', '3'),
             ('INVALID', '@'),
             ('INTEGER', '33'),
             ('PUNCTUATION', ';'),
             ('KEYWORD', 'int'),
-            ('IDENTIFIER', 'g'),
+            ('ID', 'g'),
             ('INTEGER', '4'),
-            ('IDENTIFIER', 'cd'),
+            ('ID', 'cd'),
             ('PUNCTUATION', '('),
             ('KEYWORD', 'int'),
-            ('IDENTIFIER', 'u'),
+            ('ID', 'u'),
             ('PUNCTUATION', ','),
             ('KEYWORD', 'int'),
-            ('IDENTIFIER', 'v'),
+            ('ID', 'v'),
             ('PUNCTUATION', ')'),
             ('PUNCTUATION', '{'),
             ('KEYWORD', 'if'),
             ('PUNCTUATION', '('),
-            ('IDENTIFIER', 'v'),
+            ('ID', 'v'),
             ('RELOP', '=='),
             ('RELOP', '>='),
             ('INTEGER', '0'),
             ('PUNCTUATION', ')'),
             ('KEYWORD', 'return'),
-            ('IDENTIFIER', 'u'),
+            ('ID', 'u'),
             ('PUNCTUATION', ';'),
             ('KEYWORD', 'else'),
-            ('IDENTIFIER', 'ret'),
+            ('ID', 'ret'),
             ('INVALID', '_'),
-            ('IDENTIFIER', 'urn'),
-            ('IDENTIFIER', 'gcd'),
+            ('ID', 'urn'),
+            ('ID', 'gcd'),
             ('PUNCTUATION', '('),
-            ('IDENTIFIER', 'vxxxxxxvvvvv'),
+            ('ID', 'vxxxxxxvvvvv'),
             ('PUNCTUATION', ','),
-            ('IDENTIFIER', 'u'),
+            ('ID', 'u'),
             ('MATHOP', '-'),
-            ('IDENTIFIER', 'u'),
+            ('ID', 'u'),
             ('MATHOP', '/'),
-            ('IDENTIFIER', 'v'),
+            ('ID', 'v'),
             ('MATHOP', '*'),
-            ('IDENTIFIER', 'v'),
+            ('ID', 'v'),
             ('PUNCTUATION', ')'),
             ('PUNCTUATION', ';'),
             ('INVALID', '!'),
@@ -202,7 +202,7 @@ class TestIntegration:
             ('KEYWORD', 'void'),
             ('KEYWORD', 'while'),
             ('KEYWORD', 'void'),
-            ('IDENTIFIER', 'main'),
+            ('ID', 'main'),
             ('PUNCTUATION', '('),
             ('PUNCTUATION', ')'),
         ]

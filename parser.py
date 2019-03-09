@@ -261,7 +261,7 @@ class CMinusParser:
 
     # simple-expression' -> relop additive-expression | ϵ
     def simple_expression_(self):
-        if self.next()[0] == 'EQUALITYOP':
+        if self.next()[0] == 'RELOP':
             self.relop()
             self.additive_expression()
 
@@ -269,7 +269,7 @@ class CMinusParser:
     def relop(self):
         for t in ['<=', '<', '>', '>=', '==', '!=']:
             if self.next()[1] == t:
-                self.accept(('EQUALITYOP', t))
+                self.accept(('RELOP', t))
                 return
         raise Exception("Parse error")
 

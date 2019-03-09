@@ -1,9 +1,13 @@
 from typing import List, Tuple, Union
 
 
-def parse(tokens: List[Tuple[str, str]]):
+def parse(tokens: List[Tuple[str, str]]) -> bool:
     parser = CMinusParser(tokens)
-    parser.parse()
+    try:
+        parser.parse()
+        return True
+    except:
+        return False
 
 
 class CMinusParser:
@@ -16,7 +20,6 @@ class CMinusParser:
         if (isinstance(token, tuple) and head != token) or (
                 isinstance(token, str) and head[0] != token):
             raise Exception('unexpected token', head)
-        print(head)
 
     def next(self) -> Tuple[str, str]:
         return self.tokens[0]

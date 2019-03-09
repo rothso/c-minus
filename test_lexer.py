@@ -36,6 +36,9 @@ class TestFloats(object):
     def test_reads_integers_in_scientific_notation_as_floats(self):
         assert lexer.lex('1E2') == [('FLOAT', '1E2')]
 
+    def test_reads_integers_in_signed_scientific_notation_as_floats(self):
+        assert lexer.lex('1E-2') == [('FLOAT', '1E-2')]
+
     def test_doesnt_read_float_with_trailing_e(self):
         assert lexer.lex('4.0E') == [('FLOAT', '4.0'), ('IDENTIFIER', 'E')]
 
@@ -126,6 +129,7 @@ class TestComments:
                             // ignore me
                             2''') == [('INTEGER', '1'), ('INTEGER', '2')]
 
+
 class TestIntegration:
 
     def test_tokenizes_eggens_sample_input(self):
@@ -148,7 +152,7 @@ class TestIntegration:
           return void while       void main()
         ''') == [
             ('IDENTIFIER', 'iiii'),
-            ('OPERATOR', '='),
+            ('PUNCTUATION', '='),
             ('INTEGER', '3'),
             ('INVALID', '@'),
             ('INTEGER', '33'),

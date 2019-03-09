@@ -1,3 +1,72 @@
+int MEGACONSTANT;
+float HYPERCONSTANT;
+float PI;
+
+int MEGAFUNCTION ( void )
+{
+    while(x+3 + (3 - 3) + 3 + 3){
+
+}
+    return 4; }
+
+int MEGAFUNCTIONTWO(int x,int y){if (x < 0) return x + y; else return x - y;}
+float a(float b) {
+    int c;
+    int x[10];
+    if (b < 0){ return 0.0;}
+    while (c * (4 + b + MEGACONSTANT * 5)){
+        float x;
+        x = 3.3333E+19;
+        if(x == y){
+        int x;
+        x = x - 3 + (4 / 3.0);
+        }
+    }
+
+    x[0] = x[4.4] + x[5.05E-22];
+
+
+}
+
+// don't parse this
+
+/*
+
+this /*
+
+either */
+
+*/
+
+int gcd( int u, int v) {
+if (v == 0) return u;
+else return gcd(v,u-u/v*v);
+
+}
+
+void main(void){
+int x; int y;
+x = input(); y = input();
+output(gcd(x,y));
+}
+
+int x[10];
+
+int minloc (int a[], int low, int high )
+{ int i; int x; int k;
+k = low;
+x = a[low];
+i = low + 1;
+while (i < high){
+if (a[i] = x)
+{
+x = a[i];
+k = i; }
+i = i + 1;
+}
+return k;
+}
+
 // This is a comment
 
 /* This is a comment */

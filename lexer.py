@@ -1,16 +1,18 @@
 import re
+from collections import namedtuple
 
+Token = namedtuple('Token', ['type', 'val'])
 scanner = re.Scanner([
-    (r'\s+', lambda _, token: None),  # ignore whitespace
-    (r'//.*\n', lambda _, token: None),  # ignore line comment
-    (r'==|>=|<=|>|<|!=', lambda _, token: ('RELOP', token)),
-    (r'\(|\)|\[|\]|\{|\}|,|;|=', lambda _, token: ('PUNCTUATION', token)),
-    (r'\+|-|/|\*', lambda _, token: ('MATHOP', token)),
-    (r'(?=\d*[.eE][+-]?\d+)\d+(\.\d+)?([eE][+-]?\d+)?', lambda _, token: ('FLOAT', token)),
-    (r'\d+', lambda _, token: ('INTEGER', token)),
-    (r'int|float|void|while|if|else|return', lambda _, token: ('KEYWORD', token)),
-    (r'[a-zA-Z]+', lambda _, token: ('IDENTIFIER', token)),
-    (r'.', lambda _, token: ('INVALID', token)),
+    (r'\s+', lambda _, tok: None),  # ignore whitespace
+    (r'//.*\n', lambda _, tok: None),  # ignore line comment
+    (r'==|>=|<=|>|<|!=', lambda _, token: Token('RELOP', token)),
+    (r'\(|\)|\[|\]|\{|\}|,|;|=', lambda _, token: Token('PUNCTUATION', token)),
+    (r'\+|-|/|\*', lambda _, token: Token('MATHOP', token)),
+    (r'(?=\d*[.eE][+-]?\d+)\d+(\.\d+)?([eE][+-]?\d+)?', lambda _, token: Token('FLOAT', token)),
+    (r'\d+', lambda _, token: Token('INTEGER', token)),
+    (r'int|float|void|while|if|else|return', lambda _, token: Token('KEYWORD', token)),
+    (r'[a-zA-Z]+', lambda _, token: Token('IDENTIFIER', token)),
+    (r'.', lambda _, token: Token('INVALID', token)),
 ])
 
 

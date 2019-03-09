@@ -1,0 +1,42 @@
+Project 2: Parser
+===========================
+
+Rothanak So (n01128755)
+
+
+# Purpose
+
+The purpose of this project is to develop a parser for C- according to the language spec. The
+grammar was fixed by hand and implemented using a recursive descent parser. The program tokenizes
+the input file and feeds the list of tokens into the parser. The parser peeks at the head of the
+list when deciding which rule to follow, and pops the head when accepting (consuming) a token. The
+parser throws an error if the expected popped token is not the expected token. If the entire input
+is processed with no errors, the program outputs "ACCEPT". Otherwise, it outputs "REJECT".
+
+
+# Source files
+
+Source files are located in the root directory. It contains the following files:
+
+   lexer.py             Contains the tokenizer logic, which splits the input file into tokens
+   parser.py            Contains the handwritten recursive descent parser and commented grammar
+   main.py              Reads the input file, calls the parser and lexer, and displays the output
+
+
+# Input
+
+The program requires an input file to be passed as the first argument to the p1 script.
+
+
+# Output
+
+The program will output directly to the console. The output will print ACCEPT if the input file is
+a valid C- program, and REJECT if it is not.
+
+
+# How to execute
+
+The program is written to run with Python 3.6 on Osprey.
+
+  1. Run the `make` command.
+  2. Run `./p2`, specifying the input file name.

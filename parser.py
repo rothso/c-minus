@@ -34,13 +34,15 @@ class CMinusParser:
             if self.next().val == option:
                 self.accept_val(option)
                 return
-        raise Exception("Parse error")
+        raise Exception('unexpected token', self.next())
 
     def next(self) -> Token:
         return self.tokens[0]
 
     def parse(self):
         self.program()
+        if self.tokens:
+            raise Exception('unexpected tokens after declaration list', self.tokens)
 
     # program -> declaration declaration-list
     def program(self):
@@ -98,7 +100,7 @@ class CMinusParser:
             self.accept_type('ID')
             self.param_()
             self.param_list()
-        elif self.next().val == 'void':
+        else:
             self.accept_val('void')
             self.params_()
 
@@ -125,8 +127,7 @@ class CMinusParser:
     # param' -> [] | ϵ
     def param_(self):
         if self.next().val == '[':
-            self.accept_val('[')
-            self.accept_val(']')
+            self.accept_val('[', ']')
 
     # compound-stmt -> { local-declarations statement-list }
     def compound_stmt(self):
@@ -172,8 +173,7 @@ class CMinusParser:
 
     # selection-stmt -> if ( expression ) statement selection-stmt'
     def selection_stmt(self):
-        self.accept_val('if')
-        self.accept_val('(')
+        self.accept_val('if', '(')
         self.expression()
         self.accept_val(')')
         self.statement()
@@ -187,8 +187,7 @@ class CMinusParser:
 
     # iteration-stmt -> while ( expression ) statement
     def iteration_stmt(self):
-        self.accept_val('while')
-        self.accept_val('(')
+        self.accept_val('while', '(')
         self.expression()
         self.accept_val(')')
         self.statement()

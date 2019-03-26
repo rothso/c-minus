@@ -1,5 +1,6 @@
-from typing import List, Callable
+from typing import Callable
 
+from ast import *
 from lexer import Token
 
 
@@ -17,23 +18,26 @@ class CMinusParser:
     def __init__(self, tokens: List[Token]):
         self.tokens = tokens
 
-    def match(self, matcher: Callable[[Token], str], *params: str):
+    def match(self, matcher: Callable[[Token], str], *params: str) -> List[str]:
+        values = []
         for x in params:
             head = self.tokens.pop(0)
             if matcher(head) != x:
                 raise Exception('unexpected token', head)
+            values.append(head.val)
+        return values
 
-    def accept_type(self, *types: str):
-        self.match(lambda token: token.type, *types)
+    def accept_type(self, *types: str) -> List[str]:
+        return self.match(lambda token: token.type, *types)
 
-    def accept_val(self, *values: str):
-        self.match(lambda token: token.val, *values)
+    def accept_val(self, *values: str) -> List[str]:
+        return self.match(lambda token: token.val, *values)
 
-    def union(self, options: List[str]):
+    def union(self, options: List[str]) -> str:
         for option in options:
             if self.next().val == option:
                 self.accept_val(option)
-                return
+                return option
         raise Exception('unexpected token', self.next())
 
     def next(self) -> Token:
@@ -45,298 +49,304 @@ class CMinusParser:
             raise Exception('unexpected tokens after declaration list', self.tokens)
 
     # program -> declaration declaration-list
-    def program(self):
-        self.declaration()
-        self.declaration_list()
+    def program(self) -> Program:
+        return Program(self.declaration_list([self.declaration()]))
 
     # declaration-list -> declaration declaration-list | ϵ
-    def declaration_list(self):
+    def declaration_list(self, declarations: List[Declaration]) -> List[Declaration]:
         try:
             if self.next().val in ['int', 'float', 'void']:
-                self.declaration()
-                self.declaration_list()
+                return self.declaration_list(declarations + [self.declaration()])
         except IndexError:
-            return  # end of program
+            return declarations  # end of program
 
-    # declaration -> type-specifier ID declaration'
-    def declaration(self):
-        self.type_specifier()
-        self.accept_type('ID')
-        self.declaration_()
-
-    # declaration' -> var-declaration ; | ( params ) compound-stmt
-    def declaration_(self):
+    # declaration -> type-specifier ID var-declaration ; | type-specifier ID ( params ) compound-stmt
+    def declaration(self) -> Declaration:
+        kind = self.type_specifier()
+        name = self.id()
         if self.next().val in ['[', ';']:
-            self.var_declaration()
+            array = self.var_declaration()
             self.accept_val(';')
+            return VarDeclaration(kind, name, array)
         else:
             self.accept_val('(')
-            self.params()
+            params = self.params()
             self.accept_val(')')
-            self.compound_stmt()
+            body = self.compound_stmt()
+            return FunDeclaration(kind, name, params, body)
 
-    # var-declaration' -> [ NUM ] | ϵ
-    def var_declaration(self):
+    # var-declaration -> [ NUM ] | ϵ
+    def var_declaration(self) -> Optional[Number]:
         if self.next().val == '[':
             self.accept_val('[')
-            self.number()
+            number = self.number()
             self.accept_val(']')
+            return number
+        return None
+
+    # identifier -> ID
+    def id(self) -> str:
+        return self.accept_type('ID')[0]
 
     # number -> INTEGER | FLOAT
-    def number(self):
+    def number(self) -> Number:
         if self.next().type == 'INTEGER':
-            self.accept_type('INTEGER')
+            return int(self.accept_type('INTEGER')[0])
         else:
-            self.accept_type('FLOAT')
+            return float(self.accept_type('FLOAT')[0])
 
     # type-specifier -> int | float | void
-    def type_specifier(self):
-        self.union(['int', 'float', 'void'])
+    def type_specifier(self) -> Type:
+        return Type.from_string(self.union(['int', 'float', 'void']))
 
-    # params -> int ID param' param-list | float ID param' param-list | void params'
-    def params(self):
+    # params -> int ID param' param-list | float ID param' param-list | void ID param' param-list | void
+    def params(self) -> Optional[List[ParamFormal]]:
         if self.next().val in ['int', 'float']:
-            self.accept_val(self.next().val)
-            self.accept_type('ID')
-            self.param_()
-            self.param_list()
+            return self.param_list([self.param()])
         else:
             self.accept_val('void')
-            self.params_()
-
-    # params' -> ID param' param-list | ϵ
-    def params_(self):
-        if self.next().type == 'ID':
-            self.accept_type('ID')
-            self.param_()
-            self.param_list()
+            if self.next().type == 'ID':
+                param = ParamFormal(Type.VOID, self.id(), self.param_())
+                return self.param_list([param])
+        return None
 
     # param-list' -> , param param-list | ϵ
-    def param_list(self):
+    def param_list(self, params: List[ParamFormal]) -> List[ParamFormal]:
         if self.next().val == ',':
             self.accept_val(',')
-            self.param()
-            self.param_list()
+            return self.param_list(params + [self.param()])
+        return params
 
     # param -> type-specifier ID param'
-    def param(self):
-        self.type_specifier()
-        self.accept_type('ID')
-        self.param_()
+    def param(self) -> ParamFormal:
+        kind = self.type_specifier()
+        name = self.id()
+        is_array = self.param_()
+        return ParamFormal(kind, name, is_array)
 
     # param' -> [] | ϵ
-    def param_(self):
+    def param_(self) -> bool:
         if self.next().val == '[':
             self.accept_val('[', ']')
+            return True
+        return False
 
     # compound-stmt -> { local-declarations statement-list }
-    def compound_stmt(self):
+    def compound_stmt(self) -> CompoundStatement:
         self.accept_val('{')
-        self.local_declarations()
-        self.statement_list()
+        decls = self.local_declarations([])
+        body = self.statement_list([])
         self.accept_val('}')
+        return CompoundStatement(decls, body)
 
     # local-declarations -> type-specifier ID var-declaration ; local-declarations | ϵ
-    def local_declarations(self):
+    def local_declarations(self, decls: List[VarDeclaration]) -> List[VarDeclaration]:
         if self.next().val in ['int', 'float', 'void']:
-            self.type_specifier()
-            self.accept_type('ID')
-            self.var_declaration()
+            kind = self.type_specifier()
+            name = self.id()
+            array = self.var_declaration()
             self.accept_val(';')
-            self.local_declarations()
+            return self.local_declarations(decls + [VarDeclaration(kind, name, array)])
+        return decls
 
     # statement-list -> statement statement-list | ϵ
-    def statement_list(self):
+    def statement_list(self, statements: List[Statement]) -> List[Statement]:
         if self.next().val in ['(', ';', 'if', 'return', 'while', '{'] or (
                 self.next().type in ['ID', 'INTEGER', 'FLOAT']):
-            self.statement()
-            self.statement_list()
+            return self.statement_list(statements + [self.statement()])
+        return statements
 
     # statement -> expression-stmt | compound-stmt | selection-stmt | iteration-stmt | return-stmt
-    def statement(self):
+    def statement(self) -> Statement:
         if self.next().val in ['(', ';'] or self.next().type in ['ID', 'INTEGER', 'FLOAT']:
-            self.expression_stmt()
+            return self.expression_stmt()
         elif self.next().val == '{':
-            self.compound_stmt()
+            return self.compound_stmt()
         elif self.next().val == 'if':
-            self.selection_stmt()
+            return self.selection_stmt()
         elif self.next().val == 'while':
-            self.iteration_stmt()
+            return self.iteration_stmt()
         else:
-            self.return_stmt()
+            return self.return_stmt()
 
     # expression-stmt -> expression ; | ;
-    def expression_stmt(self):
+    def expression_stmt(self) -> ExpressionStatement:
         if self.next().val == '(' or self.next().type in ['ID', 'INTEGER', 'FLOAT']:
-            self.expression()
+            expression = self.expression()
+        else:
+            expression = None
         self.accept_val(';')
+        return ExpressionStatement(expression)
 
     # selection-stmt -> if ( expression ) statement selection-stmt'
-    def selection_stmt(self):
+    def selection_stmt(self) -> IfStatement:
         self.accept_val('if', '(')
-        self.expression()
+        cond = self.expression()
         self.accept_val(')')
-        self.statement()
-        self.selection_stmt_()
+        true = self.statement()
+        false = self.selection_stmt_()
+        return IfStatement(cond, true, false)
 
     # selection-stmt' -> else statement | ϵ
-    def selection_stmt_(self):
+    def selection_stmt_(self) -> Optional[Statement]:
         if self.next().val == 'else':
             self.accept_val('else')
-            self.statement()
+            return self.statement()
+        return None
 
     # iteration-stmt -> while ( expression ) statement
-    def iteration_stmt(self):
+    def iteration_stmt(self) -> WhileStatement:
         self.accept_val('while', '(')
-        self.expression()
+        cond = self.expression()
         self.accept_val(')')
-        self.statement()
+        body = self.statement()
+        return WhileStatement(cond, body)
 
     # return-stmt -> return return-stmt' ;
-    def return_stmt(self):
+    def return_stmt(self) -> ReturnStatement:
         self.accept_val('return')
-        self.return_stmt_()
+        expression = self.return_stmt_()
         self.accept_val(';')
+        return ReturnStatement(expression)
 
     # return-stmt' -> expression | ϵ
-    def return_stmt_(self):
+    def return_stmt_(self) -> Optional[Expression]:
         if self.next().val == '(' or self.next().type in ['ID', 'INTEGER', 'FLOAT']:
-            self.expression()
+            return self.expression()
+        return None
 
-    # expression -> ID expression' | ( expression ) expression''' | NUM expression'''
-    def expression(self):
+    # expression -> ID var' expression'' | ID ( args ) expression''' | ( expression ) expression''' | NUM expression'''
+    def expression(self) -> Expression:
         if self.next().type == 'ID':
-            self.accept_type('ID')
-            self.expression_()
+            name = self.id()
+            if self.next().val == '(':
+                self.accept_val('(')
+                args = self.args()
+                self.accept_val(')')
+                return self.expression___(Call(name, args))
+            else:
+                index = self.var_()
+                return self.expression__(Variable(name, index))
         else:
             if self.next().val == '(':
                 self.accept_val('(')
-                self.expression()
+                lhs = self.expression()
                 self.accept_val(')')
+                return self.expression___(lhs)
             else:
-                self.number()
-            self.expression___()
-
-    # expression' -> var' expression'' | ( args ) expression'''
-    def expression_(self):
-        if self.next().val == '(':
-            self.accept_val('(')
-            self.args()
-            self.accept_val(')')
-            self.expression___()
-        else:
-            self.var_()
-            self.expression__()
+                lhs = self.number()
+                return self.expression___(lhs)
 
     # expression'' -> = expression | expression'''
-    def expression__(self):
+    def expression__(self, var: Variable) -> Expression:
         if self.next().val == '=':
             self.accept_val('=')
-            self.expression()
+            return AssignmentExpression(var, self.expression())
         else:
-            self.expression___()
+            return self.expression___(var)
 
     # expression''' -> term' additive-expression' simple-expression
-    def expression___(self):
-        self.term_()
-        self.additive_expression_()
-        self.simple_expression()
+    def expression___(self, lhs) -> Expression:
+        lhs = self.term_(lhs)  # TODO unsure
+        lhs = self.additive_expression_(lhs)
+        return self.simple_expression(lhs)
 
     # var -> ID var'
-    def var(self):
-        self.accept_type('ID')
-        self.var_()
+    def var(self) -> Variable:
+        return Variable(self.id(), self.var_())
 
     # var' -> [ expression ] | ϵ
-    def var_(self):
+    def var_(self) -> Optional[Expression]:
         if self.next().val == '[':
             self.accept_val('[')
-            self.expression()
+            expression = self.expression()
             self.accept_val(']')
+            return expression
+        return None
 
     # simple-expression -> relop additive-expression | ϵ
-    def simple_expression(self):
+    def simple_expression(self, lhs) -> BinaryOp:
         if self.next().type == 'RELOP':
-            self.relop()
-            self.additive_expression()
+            op = self.relop()
+            rhs = self.additive_expression()  # TODO double check tree
+            return BinaryOp(op, lhs, rhs)
+        return lhs
 
     # relop -> <= | < | > | >= | == | !=
-    def relop(self):
-        self.union(['<=', '<', '>', '>=', '==', '!='])
+    def relop(self) -> str:
+        return self.union(['<=', '<', '>', '>=', '==', '!='])
 
     # additive-expression -> term additive-expression'
-    def additive_expression(self):
-        self.term()
-        self.additive_expression_()
+    def additive_expression(self) -> BinaryOp:
+        return self.additive_expression_(self.term())
 
     # additive-expression' -> addop term additive-expression' | ϵ
-    def additive_expression_(self):
+    def additive_expression_(self, lhs) -> BinaryOp:
         if self.next().val in ['+', '-']:
-            self.addop()
-            self.term()
-            self.additive_expression_()
+            op = self.addop()
+            rhs = self.term()
+            node = BinaryOp(op, lhs, rhs)
+            return self.additive_expression_(node)
+        return lhs
 
     # addop -> + | -
-    def addop(self):
-        self.union(['+', '-'])
+    def addop(self) -> str:
+        return self.union(['+', '-'])
 
     # term -> factor term'
-    def term(self):
-        self.factor()
-        self.term_()
+    def term(self) -> BinaryOp:
+        return self.term_(self.factor())
 
     # term' -> mulop factor term' | ϵ
-    def term_(self):
+    def term_(self, lhs) -> BinaryOp:
         if self.next().val in ['*', '/']:
-            self.mulop()
-            self.factor()
-            self.term_()
+            op = self.mulop()
+            rhs = self.factor()
+            node = BinaryOp(op, lhs, rhs)
+            return self.term_(node)
+        return lhs
 
     # mulop -> * | /
-    def mulop(self):
-        self.union(['*', '/'])
+    def mulop(self) -> str:
+        return self.union(['*', '/'])
 
-    # factor -> ( expression ) | ID factor' | NUM
-    def factor(self):
+    # factor -> ( expression ) | ID ( args ) | ID var' | NUM
+    def factor(self) -> Union[Expression, Call, Variable, Number]:
         if self.next().val == '(':
             self.accept_val('(')
-            self.expression()
+            expression = self.expression()
             self.accept_val(')')
+            return expression
         elif self.next().type == 'ID':
-            self.accept_type('ID')
-            self.factor_()
+            name = self.id()
+            if self.next().val == '(':
+                self.accept_val('(')
+                args = self.args()
+                self.accept_val(')')
+                return Call(name, args)
+            else:
+                index = self.var_()
+                return Variable(name, index)
         else:
-            self.number()
-
-    # factor' -> ( args ) | var'
-    def factor_(self):
-        if self.next().val == '(':
-            self.accept_val('(')
-            self.args()
-            self.accept_val(')')
-        else:
-            self.var_()
+            return self.number()
 
     # call -> ID ( args )
-    def call(self):
-        self.accept_type('ID')
+    def call(self) -> Call:
+        name = self.id()
         self.accept_val('(')
-        self.args()
+        args = self.args()
         self.accept_val(')')
+        return Call(name, args)
 
-    # args -> arg-list | ϵ
-    def args(self):
+    # args -> expression arg-list' | ϵ
+    def args(self) -> List[Expression]:
         if self.next().val == '(' or self.next().type in ['ID', 'INTEGER', 'FLOAT']:
-            self.arg_list()
-
-    # arg-list -> expression arg-list'
-    def arg_list(self):
-        self.expression()
-        self.arg_list_()
+            return self.arg_list([self.expression()])
+        return []
 
     # arg-list' -> , expression arg-list' | ϵ
-    def arg_list_(self):
+    def arg_list(self, expressions: List[Expression]) -> List[Expression]:
         if self.next().val == ',':
             self.accept_val(',')
-            self.expression()
-            self.arg_list_()
+            return self.arg_list(expressions + [self.expression()])
+        return expressions

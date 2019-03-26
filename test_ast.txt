@@ -1,0 +1,13 @@
+int x;
+
+int func(int t) {
+
+}
+
+int main(int z, int y, int s)
+{
+    int x[1];
+    if (2) 2; else 3;
+    (2 + 2) + 2;
+    x = func(2) * 2 + 3 * 3;
+}

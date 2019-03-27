@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Union, Optional, Any
-
-Number = Union[int, float]
+from typing import List, Union, Optional
 
 
 class Type(Enum):
@@ -19,11 +17,45 @@ class Type(Enum):
         }[kind]
 
 
-class Statement:
+# Expression
+
+class Expression:
     pass
 
 
-class Expression:
+@dataclass
+class Variable(Expression):
+    name: str
+    index: Optional[Expression]
+
+
+@dataclass
+class Call(Expression):
+    name: str
+    args: List[Expression]
+
+
+@dataclass
+class BinaryOp(Expression):
+    op: str
+    lhs: Expression
+    rhs: Expression
+
+
+@dataclass
+class AssignmentExpression(Expression):
+    var: Variable
+    value: Expression
+
+
+@dataclass
+class Number(Expression):
+    value: Union[int, float]
+
+
+# Statement
+
+class Statement:
     pass
 
 
@@ -48,31 +80,6 @@ class IfStatement(Statement):
     cond: Expression
     true: Statement
     false: Optional[Statement]
-
-
-@dataclass
-class Variable:
-    name: str
-    index: Optional[Expression]
-
-
-@dataclass
-class Call:
-    name: str
-    args: List[Expression]
-
-
-@dataclass
-class BinaryOp(Expression):
-    op: str
-    lhs: Any
-    rhs: Any
-
-
-@dataclass
-class AssignmentExpression(Expression):
-    var: Variable
-    value: Expression
 
 
 @dataclass

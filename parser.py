@@ -1,6 +1,6 @@
 from typing import Callable
 
-from ast import *
+from astnodes import *
 from lexer import Token
 
 
@@ -43,10 +43,11 @@ class CMinusParser:
     def next(self) -> Token:
         return self.tokens[0]
 
-    def parse(self):
-        self.program()
+    def parse(self) -> Program:
+        program = self.program()
         if self.tokens:
             raise Exception('unexpected tokens after declaration list', self.tokens)
+        return program
 
     # program -> declaration declaration-list
     def program(self) -> Program:
@@ -91,9 +92,9 @@ class CMinusParser:
     # number -> INTEGER | FLOAT
     def number(self) -> Number:
         if self.next().type == 'INTEGER':
-            return int(self.accept_type('INTEGER')[0])
+            return Number(int(self.accept_type('INTEGER')[0]))
         else:
-            return float(self.accept_type('FLOAT')[0])
+            return Number(float(self.accept_type('FLOAT')[0]))
 
     # type-specifier -> int | float | void
     def type_specifier(self) -> Type:
@@ -246,7 +247,7 @@ class CMinusParser:
             return self.expression___(var)
 
     # expression''' -> term' additive-expression' simple-expression
-    def expression___(self, lhs) -> Expression:
+    def expression___(self, lhs: Expression) -> Expression:
         lhs = self.term_(lhs)  # TODO unsure
         lhs = self.additive_expression_(lhs)
         return self.simple_expression(lhs)
@@ -265,7 +266,7 @@ class CMinusParser:
         return None
 
     # simple-expression -> relop additive-expression | ϵ
-    def simple_expression(self, lhs) -> BinaryOp:
+    def simple_expression(self, lhs: Expression) -> Expression:
         if self.next().type == 'RELOP':
             op = self.relop()
             rhs = self.additive_expression()  # TODO double check tree
@@ -277,11 +278,11 @@ class CMinusParser:
         return self.union(['<=', '<', '>', '>=', '==', '!='])
 
     # additive-expression -> term additive-expression'
-    def additive_expression(self) -> BinaryOp:
+    def additive_expression(self) -> Expression:
         return self.additive_expression_(self.term())
 
     # additive-expression' -> addop term additive-expression' | ϵ
-    def additive_expression_(self, lhs) -> BinaryOp:
+    def additive_expression_(self, lhs: Expression) -> Expression:
         if self.next().val in ['+', '-']:
             op = self.addop()
             rhs = self.term()
@@ -294,11 +295,11 @@ class CMinusParser:
         return self.union(['+', '-'])
 
     # term -> factor term'
-    def term(self) -> BinaryOp:
+    def term(self) -> Expression:
         return self.term_(self.factor())
 
     # term' -> mulop factor term' | ϵ
-    def term_(self, lhs) -> BinaryOp:
+    def term_(self, lhs: Expression) -> Expression:
         if self.next().val in ['*', '/']:
             op = self.mulop()
             rhs = self.factor()
@@ -311,7 +312,7 @@ class CMinusParser:
         return self.union(['*', '/'])
 
     # factor -> ( expression ) | ID ( args ) | ID var' | NUM
-    def factor(self) -> Union[Expression, Call, Variable, Number]:
+    def factor(self) -> Expression:
         if self.next().val == '(':
             self.accept_val('(')
             expression = self.expression()

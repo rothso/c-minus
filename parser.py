@@ -4,13 +4,12 @@ from astnodes import *
 from lexer import Token
 
 
-def parse(tokens: List[Token]) -> bool:
+def parse(tokens: List[Token]) -> Optional[Program]:
     parser = CMinusParser(tokens)
     try:
-        parser.parse()
-        return True
+        return parser.parse()
     except:
-        return False
+        return None
 
 
 class CMinusParser:

@@ -26,12 +26,26 @@ class SemanticAnalyzer:
     def visit_declaration(self, declaration: Declaration):
         if isinstance(declaration, VarDeclaration):
             self.scope[declaration.name] = declaration
-            if declaration.array is not None:
-                self.visit_array(declaration.array)
+            self.visit_var_declaration(declaration)
         elif isinstance(declaration, FunDeclaration):
             self.scope[declaration.name] = declaration
+            self.visit_fun_declaration(declaration)
         else:
             raise Exception
+
+    def visit_var_declaration(self, declaration: VarDeclaration):
+        if declaration.array is not None:
+            self.visit_array(declaration.array)
+
+    def visit_fun_declaration(self, declaration: FunDeclaration):
+        # todo visit params
+        if declaration.body is not None:
+            self.visit_compound_statement(declaration.body)
+
+    def visit_compound_statement(self, statement: CompoundStatement):
+        for var in statement.vars:
+            self.visit_var_declaration(var)
+        # todo visit statements
 
     @staticmethod
     def visit_array(array: Number):

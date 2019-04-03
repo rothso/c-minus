@@ -1,13 +1,61 @@
-int x;
+int MEGACONSTANT;
+float HYPERCONSTANT;
+float PI;
 
-int func(int t) {
+int x[1.1];
 
+int MEGAFUNCTION(void) {
+    int x;
+    x = (x = 2) * (x = 2);
 }
 
-int main(int z, int y, int s)
-{
-    int x[1];
-    if (2) 2; else 3;
-    (2 + 2) + 2;
-    x = func(2) * 2 + 3 * 3;
+int MEGAFUNCTIONTWO(int x,int y){if (x < 0) return x + y; else return x - y;}
+
+float a(float b) {
+    int c;
+    int x[10];
+    while (c * (4 + b + MEGACONSTANT * 5)){
+        float x;
+        x = 3.3333E+19 * (x = 2);
+        if(x == y){
+        int x;
+        x = x - 3 + (4 / 3.0);
+        }
+    }
+
+    x[0] = x[4.4] + x[5.05E-22];
+}
+
+int gcd( int u, int v) {
+if (v == 0) return u;
+else return gcd(v,u-u/v*v);
+}
+
+void main(void){
+int x; int y;
+x = input(); y = input();
+output(gcd(x,y));
+}
+
+int main(void){int x;
+    int y[4];
+    x = 4;
+    y[0] = 4.0E+0;
+    y[1] = MEGAFUNCTIONTWO(x+xx,xx+(xx*MEGAFUNCTION()));
+    y[2] = MEGAFUNCTION() + a(y[1]);
+    y[1 + (1 * MEGAFUNCTION()) - MEGAFUNCTIONTWO(0, 0.0)] = 17;
+    return y[0] + (y[1] + y[2]);
+}
+
+int y(void){
+    x + 3;
+    return 4;
+}
+
+int x(void) {
+    int x[14.2];
+}
+
+int z(void x) {
+    return 0;
 }

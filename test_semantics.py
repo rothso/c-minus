@@ -13,7 +13,13 @@ class TestSemantics(object):
 class TestArrays(TestSemantics):
 
     def test_array_declaration_size_must_be_int(self):
-        assert self.analyze('int x[1];') is True
+        assert self.analyze('''
+        int x[10];
+        void main(void) { int x[2]; }
+        ''') is True
 
     def test_array_declaration_size_cannot_be_float(self):
-        assert self.analyze('int x[1.1];') is False
+        assert self.analyze('''
+        int y[10];
+        void main(void) { int y[2.0]; }
+        ''') is False

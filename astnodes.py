@@ -108,7 +108,7 @@ class ParamFormal:
 
 @dataclass
 class FunDeclaration(Declaration):
-    params: List[ParamFormal]
+    params: Optional[List[ParamFormal]]
     body: Optional[CompoundStatement]
 
 

@@ -7,7 +7,17 @@ class TestSemantics(object):
 
     @staticmethod
     def analyze(string: str):
-        return semantics.analyze(parser.parse(lexer.lex(string)))
+        parse = parser.parse(lexer.lex(string))
+        assert parse is not None  # make sure the program is grammatically valid
+        return semantics.analyze(parse)
+
+
+class TestProgram(TestSemantics):
+
+    def test_last_declaration_should_be_void_main_void(self):
+        assert self.analyze('''void main(void) { }''') is True
+        assert self.analyze('''int main(void) { }''') is False
+        assert self.analyze('''int f(void) { }''') is False
 
 
 class TestArrays(TestSemantics):

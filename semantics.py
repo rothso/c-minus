@@ -21,7 +21,11 @@ class SemanticAnalyzer:
     def visit_program(self, program: Program):
         for declaration in program.declarations:
             self.visit_declaration(declaration)
-        # todo assert declaration list contains void main(void)
+
+        # The last declaration should be "void main(void)"
+        d = program.declarations[-1]
+        if not (isinstance(d, FunDeclaration) and d.type == Type.VOID and d.params is None):
+            raise ValueError('Last declaration should be void main(void)')
 
     def visit_declaration(self, declaration: Declaration):
         if isinstance(declaration, VarDeclaration):
@@ -51,4 +55,4 @@ class SemanticAnalyzer:
     def visit_array(array: Number):
         # Array indexes must be of type int
         if isinstance(array.value, float):
-            raise ValueError(f'invalid array size: {array.value}')
+            raise ValueError(f'Invalid array size type: {array.value}')

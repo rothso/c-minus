@@ -43,3 +43,26 @@ class TestTypes(TestSemantics):
         void main(void) {
           void y;
         }''') is False
+
+
+class TestScope(TestSemantics):
+
+    def test_cannot_call_undeclared_variables(self):
+        assert self.analyze('''
+        void main(void) { x + 2; }
+        ''') is False
+
+    def test_variables_in_outer_scope_are_recognized(self):
+        assert self.analyze('''
+        int x;
+        void main(void) { x + 2; }
+        ''') is True
+
+    def test_cannot_call_out_of_scope_variables(self):
+        assert self.analyze('''
+        void f(void) { int x; }
+        void main(void) {
+          x + 4;
+        }''') is False
+
+    # todo cannot assign to out of scope variables

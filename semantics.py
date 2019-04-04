@@ -16,7 +16,25 @@ def analyze(program: Optional[Program]) -> bool:
 class SemanticAnalyzer:
 
     def __init__(self):
+        self.stack = []
         self.scope = {}
+
+    def insert(self, declaration: Declaration):
+        self.scope[declaration.name] = declaration
+
+    def lookup(self, name: str):
+        for scope in reversed(self.stack):
+            declaration = scope.get(name)
+            if declaration is not None:
+                return declaration
+        return None
+
+    def add_scope(self):
+        self.stack.append(self.scope)
+        self.scope = {}
+
+    def remove_scope(self):
+        self.scope = self.stack.pop()
 
     def visit_program(self, program: Program):
         for declaration in program.declarations:
@@ -29,15 +47,15 @@ class SemanticAnalyzer:
 
     def visit_declaration(self, declaration: Declaration):
         if isinstance(declaration, VarDeclaration):
-            self.scope[declaration.name] = declaration
             self.visit_var_declaration(declaration)
         elif isinstance(declaration, FunDeclaration):
-            self.scope[declaration.name] = declaration
             self.visit_fun_declaration(declaration)
         else:
             raise Exception
 
     def visit_var_declaration(self, declaration: VarDeclaration):
+        self.insert(declaration)
+
         # Variable declarations can only use type specifier int and float
         if declaration.type not in [Type.INTEGER, Type.FLOAT]:
             raise ValueError(f'Declaration {declaration.name} cannot have void type')
@@ -46,14 +64,36 @@ class SemanticAnalyzer:
             self.visit_array(declaration.array)
 
     def visit_fun_declaration(self, declaration: FunDeclaration):
+        self.insert(declaration)
+
         # todo visit params
         if declaration.body is not None:
             self.visit_compound_statement(declaration.body)
 
     def visit_compound_statement(self, statement: CompoundStatement):
+        self.add_scope()
         for var in statement.vars:
             self.visit_var_declaration(var)
-        # todo visit statements
+        for statement in statement.body:
+            self.visit_statement(statement)
+        self.remove_scope()
+
+    def visit_statement(self, statement: Statement):
+        if isinstance(statement, ExpressionStatement):
+            if statement.expression is not None:
+                self.visit_expression(statement.expression)
+
+    # todo handle expression type
+    def visit_expression(self, expression: Expression):
+        if isinstance(expression, BinaryOp):
+            # todo verify operator-operand agreement
+            self.visit_expression(expression.lhs)
+            self.visit_expression(expression.rhs)
+        elif isinstance(expression, Variable):
+            # All variables must be declared in scope before they are used
+            if self.lookup(expression.name) is None:
+                raise ValueError(f'Variable {expression.name} has not been defined')
+            # todo verify index is a number
 
     @staticmethod
     def visit_array(array: Number):

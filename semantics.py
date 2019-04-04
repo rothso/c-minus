@@ -38,6 +38,10 @@ class SemanticAnalyzer:
             raise Exception
 
     def visit_var_declaration(self, declaration: VarDeclaration):
+        # Variable declarations can only use type specifier int and float
+        if declaration.type not in [Type.INTEGER, Type.FLOAT]:
+            raise ValueError(f'Declaration {declaration.name} cannot have void type')
+
         if declaration.array is not None:
             self.visit_array(declaration.array)
 

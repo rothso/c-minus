@@ -33,3 +33,13 @@ class TestArrays(TestSemantics):
         int y[10];
         void main(void) { int y[2.0]; }
         ''') is False
+
+
+class TestTypes(TestSemantics):
+
+    def test_variable_declaration_cannot_use_void(self):
+        assert self.analyze('''
+        void x;
+        void main(void) {
+          void y;
+        }''') is False

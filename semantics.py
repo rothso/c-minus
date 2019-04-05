@@ -23,7 +23,7 @@ class SemanticAnalyzer:
         self.scope[declaration.name] = declaration
 
     def lookup(self, name: str) -> Optional[Declaration]:
-        for scope in reversed(self.stack):
+        for scope in reversed(self.stack + [self.scope]):
             declaration = scope.get(name)
             if declaration is not None:
                 return declaration
@@ -64,25 +64,41 @@ class SemanticAnalyzer:
         self.insert(declaration)
 
         # todo visit params
-        if declaration.body is not None:
-            self.visit_compound_statement(declaration.body, declaration.type)
 
-    def visit_compound_statement(self, statement: CompoundStatement, function_type: Type):
+        # Functions not declared void must return values of the correct type
+        has_return = self.visit_compound_statement(declaration.body, declaration.type)
+        if declaration.type != Type.VOID and not has_return:
+            raise ValueError(f'{declaration.type} function must have at least one return')
+
+    def visit_compound_statement(self, statement: CompoundStatement, function_type: Type) -> bool:
+        has_return = False
         self.add_scope()
         for var in statement.vars:
             self.visit_var_declaration(var)
         for statement in statement.body:
-            self.visit_statement(statement, function_type)
+            has_return |= self.visit_statement(statement, function_type)
         self.remove_scope()
+        return has_return
 
-    def visit_statement(self, statement: Statement, function_type: Type):
+    def visit_statement(self, statement: Statement, function_type: Type) -> bool:
         if isinstance(statement, ExpressionStatement):
             if statement.expression is not None:
                 self.visit_expression(statement.expression)
+        if isinstance(statement, IfStatement):
+            # Condition in an if statement must be an integer
+            if self.visit_expression(statement.cond) != Type.INTEGER:
+                raise ValueError('The condition in an if statement must be an integer')
+            has_return = self.visit_statement(statement.true, function_type)
+            if statement.false is not None:
+                has_return |= self.visit_statement(statement.false, function_type)
+            return has_return
         elif isinstance(statement, ReturnStatement):
-            if statement.expression is not None:
-                if self.visit_expression(statement.expression) is not function_type:
-                    raise ValueError(f'Return type does not match function type {function_type}')
+            exp = statement.expression
+            # Return type must match function type
+            if (self.visit_expression(exp) if exp is not None else Type.VOID) is not function_type:
+                raise ValueError(f'Return type does not match function type {function_type}')
+            return True
+        return False
 
     # todo handle expression type
     def visit_expression(self, expression: Expression) -> Type:

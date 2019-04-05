@@ -55,14 +55,14 @@ class TestArrays(TestSemantics):
 
 class TestReturns(TestSemantics):
 
-    # def test_int_function_must_return_int(self):
-    #     assert self.analyze(self.with_main('''
-    #     int f(void) { }
-    #     ''')) is False
-
     def test_int_function_cannot_return_float(self):
         assert self.analyze(self.with_main('''
         int f(void) { return 4.0E-13; }
+        ''')) is False
+
+    def test_int_function_cannot_empty_return(self):
+        assert self.analyze(self.with_main('''
+        int f(void) { return; }
         ''')) is False
 
     def test_float_function_cannot_return_int(self):
@@ -75,10 +75,34 @@ class TestReturns(TestSemantics):
         void main(void) { return 4; }
         ''') is False
 
-    # def test_multiple_returns_must_all_match_type(self):
-    #     assert self.analyze(self.with_main('''
-    #     int f(void) { if (1) return 4; else return (5); }
-    #     ''')) is True
+    def test_non_void_functions_must_return(self):
+        assert self.analyze(self.with_main('''
+        int f(void) { }
+        ''')) is False
+
+    def test_void_function_optionally_return(self):
+        assert self.analyze('''
+        void x(void) { }
+        void main(void) { return; }
+        ''') is True
+
+    def test_multiple_returns_must_all_match_type(self):
+        assert self.analyze(self.with_main('''
+        int f(void) { if (1) return 4; else return 5; }
+        ''')) is True
+
+
+class TestIterators(TestSemantics):
+
+    def test_if_condition_can_be_int(self):
+        assert self.analyze('''
+        void main(void) { if (2) 2; }
+        ''') is True
+
+    def test_if_condition_cannot_be_float(self):
+        assert self.analyze('''
+        void main(void) { if (2.0) 2; }
+        ''') is False
 
 
 class TestExpression(TestSemantics):
@@ -104,7 +128,10 @@ class TestTypes(TestSemantics):
         }''') is False
 
     def test_cannot_use_void_type_as_argument(self):
-        pass  # todo
+        pass
+        # assert self.analyze('''
+        # void main(void) { return main() }
+        # ''') is False
 
 
 class TestScope(TestSemantics):
@@ -113,6 +140,13 @@ class TestScope(TestSemantics):
         assert self.analyze('''
         void main(void) { x + 2; }
         ''') is False
+
+    def test_variables_in_current_scope_are_recognized(self):
+        assert self.analyze('''
+        void main(void) {
+            int x;
+            x + 2;
+        }''')
 
     def test_variables_in_outer_scope_are_recognized(self):
         assert self.analyze('''
@@ -126,5 +160,14 @@ class TestScope(TestSemantics):
         void main(void) {
           x + 4;
         }''') is False
+
+    def test_shadowing_recognizes_closest_variable(self):
+        assert self.analyze('''
+        float x;
+        void main(void) {
+            int x;
+            x + 4;
+        }
+        ''') is True
 
     # todo cannot assign to out of scope variables

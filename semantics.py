@@ -22,7 +22,7 @@ class SemanticAnalyzer:
     def insert(self, declaration: Declaration):
         self.scope[declaration.name] = declaration
 
-    def lookup(self, name: str):
+    def lookup(self, name: str) -> Optional[Declaration]:
         for scope in reversed(self.stack):
             declaration = scope.get(name)
             if declaration is not None:
@@ -39,7 +39,6 @@ class SemanticAnalyzer:
     def visit_program(self, program: Program):
         for declaration in program.declarations:
             self.visit_declaration(declaration)
-
         # The last declaration should be "void main(void)"
         d = program.declarations[-1]
         if not (isinstance(d, FunDeclaration) and d.type == Type.VOID and d.params is None):
@@ -51,15 +50,13 @@ class SemanticAnalyzer:
         elif isinstance(declaration, FunDeclaration):
             self.visit_fun_declaration(declaration)
         else:
-            raise Exception
+            raise Exception("Not possible")
 
     def visit_var_declaration(self, declaration: VarDeclaration):
         self.insert(declaration)
-
         # Variable declarations can only use type specifier int and float
         if declaration.type not in [Type.INTEGER, Type.FLOAT]:
             raise ValueError(f'Declaration {declaration.name} cannot have void type')
-
         if declaration.array is not None:
             self.visit_array(declaration.array)
 
@@ -84,16 +81,27 @@ class SemanticAnalyzer:
                 self.visit_expression(statement.expression)
 
     # todo handle expression type
-    def visit_expression(self, expression: Expression):
+    def visit_expression(self, expression: Expression) -> Type:
         if isinstance(expression, BinaryOp):
-            # todo verify operator-operand agreement
-            self.visit_expression(expression.lhs)
-            self.visit_expression(expression.rhs)
+            ltype = self.visit_expression(expression.lhs)
+            rtype = self.visit_expression(expression.rhs)
+            # The left and right sides of the argument should be the same
+            if ltype is not rtype:
+                raise ValueError('Mixed mode arithmetic is not supported')
+            return ltype
         elif isinstance(expression, Variable):
+            variable = self.lookup(expression.name)
             # All variables must be declared in scope before they are used
-            if self.lookup(expression.name) is None:
+            if variable is None:
                 raise ValueError(f'Variable {expression.name} has not been defined')
-            # todo verify index is a number
+            # Array indexes must be of type int
+            if expression.index is not None:
+                if self.visit_expression(expression.index) is not Type.INTEGER:
+                    raise ValueError('Array indexes must be of type int')
+            return variable.type
+        elif isinstance(expression, Number):
+            return Type.INTEGER if isinstance(expression.value, int) else Type.FLOAT
+        raise Exception("Not implemented")
 
     @staticmethod
     def visit_array(array: Number):

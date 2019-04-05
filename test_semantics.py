@@ -30,9 +30,34 @@ class TestArrays(TestSemantics):
 
     def test_array_declaration_size_cannot_be_float(self):
         assert self.analyze('''
-        int y[10];
+        int y[10.0];
         void main(void) { int y[2.0]; }
         ''') is False
+
+    def test_array_indexes_must_be_int(self):
+        assert self.analyze('''
+        int x[10];
+        void main(void) { x[2 + 2]; }
+        ''') is True
+
+    def test_array_indexes_cannot_be_float(self):
+        assert self.analyze('''
+        int y[10];
+        void main(void) { y[2.0 + 2.0]; }
+        ''') is False
+
+
+class TestExpression(TestSemantics):
+
+    def test_int_plus_float_should_fail(self):
+        assert self.analyze('''
+        void main(void) { 2.0 + 2; }
+        ''') is False
+
+    def test_int_plus_int_should_pass(self):
+        assert self.analyze('''
+        void main(void) { 2 + 2; }
+        ''') is True
 
 
 class TestTypes(TestSemantics):

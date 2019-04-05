@@ -11,6 +11,12 @@ class TestSemantics(object):
         assert parse is not None  # make sure the program is grammatically valid
         return semantics.analyze(parse)
 
+    @staticmethod
+    def with_main(string: str) -> str:
+        return string + '''
+        void main(void) {}
+        '''
+
 
 class TestProgram(TestSemantics):
 
@@ -47,6 +53,34 @@ class TestArrays(TestSemantics):
         ''') is False
 
 
+class TestReturns(TestSemantics):
+
+    # def test_int_function_must_return_int(self):
+    #     assert self.analyze(self.with_main('''
+    #     int f(void) { }
+    #     ''')) is False
+
+    def test_int_function_cannot_return_float(self):
+        assert self.analyze(self.with_main('''
+        int f(void) { return 4.0E-13; }
+        ''')) is False
+
+    def test_float_function_cannot_return_int(self):
+        assert self.analyze(self.with_main('''
+        float f(void) { return 4; }
+        ''')) is False
+
+    def test_void_function_cannot_return_int(self):
+        assert self.analyze('''
+        void main(void) { return 4; }
+        ''') is False
+
+    # def test_multiple_returns_must_all_match_type(self):
+    #     assert self.analyze(self.with_main('''
+    #     int f(void) { if (1) return 4; else return (5); }
+    #     ''')) is True
+
+
 class TestExpression(TestSemantics):
 
     def test_int_plus_float_should_fail(self):
@@ -68,6 +102,9 @@ class TestTypes(TestSemantics):
         void main(void) {
           void y;
         }''') is False
+
+    def test_cannot_use_void_type_as_argument(self):
+        pass  # todo
 
 
 class TestScope(TestSemantics):

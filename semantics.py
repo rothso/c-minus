@@ -65,20 +65,24 @@ class SemanticAnalyzer:
 
         # todo visit params
         if declaration.body is not None:
-            self.visit_compound_statement(declaration.body)
+            self.visit_compound_statement(declaration.body, declaration.type)
 
-    def visit_compound_statement(self, statement: CompoundStatement):
+    def visit_compound_statement(self, statement: CompoundStatement, function_type: Type):
         self.add_scope()
         for var in statement.vars:
             self.visit_var_declaration(var)
         for statement in statement.body:
-            self.visit_statement(statement)
+            self.visit_statement(statement, function_type)
         self.remove_scope()
 
-    def visit_statement(self, statement: Statement):
+    def visit_statement(self, statement: Statement, function_type: Type):
         if isinstance(statement, ExpressionStatement):
             if statement.expression is not None:
                 self.visit_expression(statement.expression)
+        elif isinstance(statement, ReturnStatement):
+            if statement.expression is not None:
+                if self.visit_expression(statement.expression) is not function_type:
+                    raise ValueError(f'Return type does not match function type {function_type}')
 
     # todo handle expression type
     def visit_expression(self, expression: Expression) -> Type:

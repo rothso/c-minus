@@ -91,6 +91,12 @@ class TestReturns(TestSemantics):
         int f(void) { if (1) return 4; else return 5; }
         ''')) is True
 
+    def test_cannot_return_arrays(self):
+        assert self.analyze(self.with_main('''
+        int x[5];
+        int f(void) { return x; }
+        ''')) is False
+
 
 class TestIterators(TestSemantics):
 
@@ -116,6 +122,12 @@ class TestExpression(TestSemantics):
         assert self.analyze('''
         void main(void) { 2 + 2; }
         ''') is True
+
+    def test_cannot_add_arrays(self):
+        assert self.analyze('''
+        int x[20];
+        void main(void) { x + x; }
+        ''') is False
 
 
 class TestTypes(TestSemantics):

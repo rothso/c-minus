@@ -18,11 +18,15 @@ class SemanticAnalyzer:
     def __init__(self):
         self.stack = []
         self.scope = {}
+        self.functions = {}
 
-    def insert(self, declaration: Declaration):
+    def insertVar(self, declaration: VarDeclaration):
         self.scope[declaration.name] = declaration
 
-    def lookup(self, name: str) -> Optional[Declaration]:
+    def insertFun(self, declaration: FunDeclaration):
+        self.functions[declaration.name] = declaration
+
+    def lookup(self, name: str) -> Optional[VarDeclaration]:
         for scope in reversed(self.stack + [self.scope]):
             declaration = scope.get(name)
             if declaration is not None:
@@ -53,7 +57,7 @@ class SemanticAnalyzer:
             raise Exception("Not possible")
 
     def visit_var_declaration(self, declaration: VarDeclaration):
-        self.insert(declaration)
+        self.insertVar(declaration)
         # Variable declarations can only use type specifier int and float
         if declaration.type not in [Type.INTEGER, Type.FLOAT]:
             raise ValueError(f'Declaration {declaration.name} cannot have void type')
@@ -61,7 +65,7 @@ class SemanticAnalyzer:
             self.visit_array(declaration.array)
 
     def visit_fun_declaration(self, declaration: FunDeclaration):
-        self.insert(declaration)
+        self.insertFun(declaration)
 
         # todo visit params
 
@@ -86,7 +90,7 @@ class SemanticAnalyzer:
                 self.visit_expression(statement.expression)
         if isinstance(statement, IfStatement):
             # Condition in an if statement must be an integer
-            if self.visit_expression(statement.cond) != Type.INTEGER:
+            if self.visit_expression(statement.cond) != (Type.INTEGER, False):
                 raise ValueError('The condition in an if statement must be an integer')
             has_return = self.visit_statement(statement.true, function_type)
             if statement.false is not None:
@@ -94,21 +98,29 @@ class SemanticAnalyzer:
             return has_return
         elif isinstance(statement, ReturnStatement):
             exp = statement.expression
+            kind, is_array = self.visit_expression(exp) if exp is not None else (Type.VOID, False)
+            # Can only return simple structures (no arrays)
+            if is_array:
+                raise ValueError(f'An array cannot be returned from a function')
             # Return type must match function type
-            if (self.visit_expression(exp) if exp is not None else Type.VOID) is not function_type:
+            if kind is not function_type:
                 raise ValueError(f'Return type does not match function type {function_type}')
             return True
         return False
 
     # todo handle expression type
-    def visit_expression(self, expression: Expression) -> Type:
+    def visit_expression(self, expression: Expression) -> (Type, bool):
         if isinstance(expression, BinaryOp):
-            ltype = self.visit_expression(expression.lhs)
-            rtype = self.visit_expression(expression.rhs)
+            l_type, l_array = self.visit_expression(expression.lhs)
+            r_type, r_array = self.visit_expression(expression.rhs)
+            # Cannot perform binary operations on arrays
+            if l_array or r_array:
+                raise ValueError(f'Cannot perform {expression.op} on an array')
             # The left and right sides of the argument should be the same
-            if ltype is not rtype:
+            elif l_type is not r_type:
                 raise ValueError('Mixed mode arithmetic is not supported')
-            return ltype
+            return l_type, False  # not an array
+
         elif isinstance(expression, Variable):
             variable = self.lookup(expression.name)
             # All variables must be declared in scope before they are used
@@ -116,11 +128,13 @@ class SemanticAnalyzer:
                 raise ValueError(f'Variable {expression.name} has not been defined')
             # Array indexes must be of type int
             if expression.index is not None:
-                if self.visit_expression(expression.index) is not Type.INTEGER:
+                if self.visit_expression(expression.index) != (Type.INTEGER, False):
                     raise ValueError('Array indexes must be of type int')
-            return variable.type
+                return variable.type, False  # not an array
+            return variable.type, variable.is_array()  # raw variable
+
         elif isinstance(expression, Number):
-            return Type.INTEGER if isinstance(expression.value, int) else Type.FLOAT
+            return Type.INTEGER if isinstance(expression.value, int) else Type.FLOAT, False
         raise Exception("Not implemented")
 
     @staticmethod

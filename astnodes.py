@@ -92,6 +92,9 @@ class Declaration:
 class VarDeclaration(Declaration):
     array: Optional[Number]
 
+    def is_array(self):
+        return self.array is not None
+
 
 @dataclass
 class CompoundStatement(Statement):

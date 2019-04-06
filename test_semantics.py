@@ -129,21 +129,24 @@ class TestExpression(TestSemantics):
         void main(void) { x + x; }
         ''') is False
 
+    def test_cannot_add_void_types(self):
+        assert self.analyze('''
+        void main(void) { main() + main(); }
+        ''') is False
+
 
 class TestTypes(TestSemantics):
 
     def test_variable_declaration_cannot_use_void(self):
         assert self.analyze('''
         void x;
-        void main(void) {
-          void y;
-        }''') is False
+        void main(void) { void y; }
+        ''') is False
 
     def test_cannot_use_void_type_as_argument(self):
-        pass
-        # assert self.analyze('''
-        # void main(void) { return main() }
-        # ''') is False
+        assert self.analyze('''
+        void main(void) { return main(); }
+        ''') is False
 
 
 class TestScope(TestSemantics):
@@ -181,5 +184,10 @@ class TestScope(TestSemantics):
             x + 4;
         }
         ''') is True
+
+    def test_cannot_call_functions_before_they_are_declared(self):
+        assert self.analyze('''
+        void main(void) { f(); }
+        ''') is False
 
     # todo cannot assign to out of scope variables

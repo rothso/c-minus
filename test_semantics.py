@@ -20,10 +20,13 @@ class TestSemantics(object):
 
 class TestProgram(TestSemantics):
 
+    def test_analyze_missing_program(self):
+        assert semantics.analyze(None) is False
+
     def test_last_declaration_should_be_void_main_void(self):
         assert self.analyze('''void main(void) { }''') is True
-        assert self.analyze('''int main(void) { }''') is False
-        assert self.analyze('''int f(void) { }''') is False
+        assert self.analyze('''int main(void) { return 2; }''') is False
+        assert self.analyze('''int f(void) { return 2; }''') is False
 
 
 class TestArrays(TestSemantics):
@@ -110,8 +113,37 @@ class TestIterators(TestSemantics):
         void main(void) { if (2.0) 2; }
         ''') is False
 
+    def test_while_condition_can_be_int(self):
+        assert self.analyze('''
+        void main(void) { while (2) 2; }
+        ''') is True
+
+    def test_while_condition_cannot_be_float(self):
+        assert self.analyze('''
+        void main(void) { while (2.0) 2; }
+        ''') is False
+
 
 class TestExpression(TestSemantics):
+
+    def test_mega_expressions(self):
+        assert self.analyze('''
+        float x(void) { return 4.0; }
+        int y(int x) { return x * 2; }
+        void main(void) {
+            float x;
+            int y;
+            int z;
+            x; y; ;;;
+            x = x;
+            y = (x >= 2.0) + 4 + (y != 2);
+            if (y > 0) x = 1.0; else y = 0;
+            z = y = (y = 4) * (z = 2) * 4;
+            x = 2.0 + 3.0e4 * (5.0e-2 / (4.0 + x()));
+            y = 2 + 3 / (4 + 5) / y(4);
+            return;
+        }
+        ''') is True
 
     def test_int_plus_float_should_fail(self):
         assert self.analyze('''
@@ -123,15 +155,39 @@ class TestExpression(TestSemantics):
         void main(void) { 2 + 2; }
         ''') is True
 
-    def test_cannot_add_arrays(self):
+    def test_array_plus_array_should_fail(self):
         assert self.analyze('''
         int x[20];
         void main(void) { x + x; }
         ''') is False
 
-    def test_cannot_add_void_types(self):
+    def test_void_plus_void_should_fail(self):
         assert self.analyze('''
         void main(void) { main() + main(); }
+        ''') is False
+
+    def test_equality_should_effective_be_int(self):
+        assert self.analyze('''
+        void main(void) { if (1.0 > 2.0) (2.0 == 1.0) + 1; }
+        ''') is True
+
+    def test_cannot_assign_to_array(self):
+        assert self.analyze('''
+        int x[20];
+        int y[20];
+        void main(void) { x = y; }
+        ''') is False
+
+    def test_can_assign_proper_type_to_array_element(self):
+        assert self.analyze('''
+        int x[20];
+        void main(void) { x[20] = 4; }
+        ''') is True
+
+    def test_cannot_assign_improper_type_to_array_element(self):
+        assert self.analyze('''
+        int x[20];
+        void main(void) { x[20] = 4.0; }
         ''') is False
 
 
@@ -149,7 +205,39 @@ class TestTypes(TestSemantics):
         ''') is False
 
 
+class TestFunctions(TestSemantics):
+
+    def test_parameter_types_cannot_be_void(self):
+        assert self.analyze(self.with_main('''
+        void z(int a, void b) { }
+        ''')) is False
+
+    def test_parameters_cannot_disagree_in_type(self):
+        assert self.analyze('''
+        void z(int a, int b) { }
+        void main(void) { z(1.0, 2.0); }
+        ''') is False
+
+    def test_parameters_cannot_disagree_in_number(self):
+        assert self.analyze('''
+        void z(int a, int b) { }
+        void main(void) { z(1); }
+        ''') is False
+
+    def test_void_parameters_should_agree_in_type(self):
+        assert self.analyze('''
+        void z(void) { }
+        void main(void) { z(); }
+        ''') is True
+
+
 class TestScope(TestSemantics):
+
+    def test_functions_may_only_be_declared_once(self):
+        assert self.analyze('''
+        int main(int x) { return 2; }
+        void main(void) {}
+        ''') is False
 
     def test_cannot_call_undeclared_variables(self):
         assert self.analyze('''
@@ -190,4 +278,14 @@ class TestScope(TestSemantics):
         void main(void) { f(); }
         ''') is False
 
-    # todo cannot assign to out of scope variables
+    def test_cannot_have_variables_same_name_in_same_scope(self):
+        assert self.analyze(self.with_main('''
+        void f(int x) { int x; }
+        ''')) is False
+
+    def test_cannot_assign_to_out_of_scope_variables(self):
+        assert self.analyze('''
+        void main(void) {
+          while (1) { int x; }
+          x = 4;
+        }''') is False

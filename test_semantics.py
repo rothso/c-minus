@@ -31,6 +31,18 @@ class TestProgram(TestSemantics):
 
 class TestArrays(TestSemantics):
 
+    def test_mega_arrays(self):
+        assert self.analyze('''
+        int f(int x) { return x; }
+        void main(void) {
+            int x[1];
+            x[x[x[0]]]
+            =
+            f(f(f(0)));
+            f(x[f(x[f(x[0])])]);
+        }
+        ''') is True
+
     def test_array_declaration_size_must_be_int(self):
         assert self.analyze('''
         int x[10];
@@ -57,6 +69,15 @@ class TestArrays(TestSemantics):
 
 
 class TestReturns(TestSemantics):
+
+    def test_mega_returns(self):
+        assert self.analyze('''
+        int x(void) { return 4; return 8; }
+        void y(void) { return; return; }
+        void z(void) { }
+        float aa(void) { if (1 == 0) { return 4.0E-13; } }
+        void main(void) { main(); }
+        ''') is True
 
     def test_int_function_cannot_return_float(self):
         assert self.analyze(self.with_main('''
@@ -207,6 +228,14 @@ class TestTypes(TestSemantics):
 
 class TestFunctions(TestSemantics):
 
+    def test_mega_params(self):
+        assert self.analyze('''
+        int v(void) { return 3; }
+        int x(int a, int b, int c) { return a + b + c; }
+        float y(int x, float y) { return y; }
+        void main(void) { v(); y(1, 2.0); x(1, 2, v()); }
+        ''') is True
+
     def test_parameter_types_cannot_be_void(self):
         assert self.analyze(self.with_main('''
         void z(int a, void b) { }
@@ -232,6 +261,29 @@ class TestFunctions(TestSemantics):
 
 
 class TestScope(TestSemantics):
+
+    def test_mega_scope(self):
+        assert self.analyze('''
+        float a;
+        int x;
+        int x(int q) { { int q; { q = q; { return x + q + x(x); } } } }
+        void main(void) {
+            int q;
+            int x;
+            float b;
+            if (x(x) == x(q)) {
+                float c;
+                int x;
+                c = a + b;
+                x = x(x);
+                x + q;
+            }
+            else if (1.0 == 1.0) {
+                x + q;
+            }
+            x = x + x + q + q + x(q);
+        }
+        ''') is True
 
     def test_functions_may_only_be_declared_once(self):
         assert self.analyze('''

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from enum import Enum
 from typing import List, Union, Optional
 
@@ -23,34 +22,34 @@ class Expression:
     pass
 
 
-@dataclass
 class Variable(Expression):
-    name: str
-    index: Optional[Expression]
+    def __init__(self, name: str, index: Optional[Expression]):
+        self.name = name
+        self.index = index
 
 
-@dataclass
 class Call(Expression):
-    name: str
-    args: List[Expression]
+    def __init__(self, name: str, args: List[Expression]):
+        self.name = name
+        self.args = args
 
 
-@dataclass
 class BinaryOp(Expression):
-    op: str
-    lhs: Expression
-    rhs: Expression
+    def __init__(self, op: str, lhs: Expression, rhs: Expression):
+        self.op = op
+        self.lhs = lhs
+        self.rhs = rhs
 
 
-@dataclass
 class AssignmentExpression(Expression):
-    var: Variable
-    value: Expression
+    def __init__(self, var: Variable, value: Expression):
+        self.var = var
+        self.value = value
 
 
-@dataclass
 class Number(Expression):
-    value: Union[int, float]
+    def __init__(self, value: Union[int, float]):
+        self.value = value
 
 
 # Statement
@@ -59,62 +58,65 @@ class Statement:
     pass
 
 
-@dataclass
 class ExpressionStatement(Statement):
-    expression: Optional[Expression]
+    def __init__(self, expression: Optional[Expression]):
+        self.expression = expression
 
 
-@dataclass
 class ReturnStatement(Statement):
-    expression: Optional[Expression]
+    def __init__(self, expression: Optional[Expression]):
+        self.expression = expression
 
 
-@dataclass
 class WhileStatement(Statement):
-    cond: Expression
-    body: Statement
+    def __init__(self, cond: Expression, body: Statement):
+        self.cond = cond
+        self.body = body
 
 
-@dataclass
 class IfStatement(Statement):
-    cond: Expression
-    true: Statement
-    false: Optional[Statement]
+    def __init__(self, cond: Expression, true: Statement, false: Optional[Statement]):
+        self.cond = cond
+        self.true = true
+        self.false = false
 
 
-@dataclass
 class Declaration:
-    type: Type
-    name: str
+    def __init__(self, kind: Type, name: str):
+        self.type = kind
+        self.name = name
 
 
-@dataclass
 class VarDeclaration(Declaration):
-    array: Optional[Number]
+    def __init__(self, kind: Type, name: str, array: Optional[Number]):
+        super().__init__(kind, name)
+        self.array = array
 
     def is_array(self):
         return self.array is not None
 
 
-@dataclass
 class CompoundStatement(Statement):
-    vars: List[VarDeclaration]
-    body: List[Statement]
+    def __init__(self, variables: List[VarDeclaration], body: List[Statement]):
+        self.vars = variables
+        self.body = body
 
 
-@dataclass
 class ParamFormal:
-    type: Type
-    name: str
-    is_array: bool
+    def __init__(self, kind: Type, name: str, is_array: bool):
+        self.type = kind
+        self.name = name
+        self.is_array = is_array
 
 
-@dataclass
 class FunDeclaration(Declaration):
-    params: Optional[List[ParamFormal]]
-    body: CompoundStatement
+    def __init__(self, kind: Type, name: str, params: Optional[List[ParamFormal]],
+                 body: CompoundStatement):
+        super().__init__(kind, name)
+        self.params = params
+        self.body = body
 
 
-@dataclass
 class Program:
-    declarations: List[Declaration]
+    def __init__(self, declarations: List[Declaration]):
+        self.declarations = declarations

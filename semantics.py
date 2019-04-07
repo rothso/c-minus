@@ -11,7 +11,7 @@ def analyze(program: Optional[Program]) -> bool:
         else:
             return False
     except ValueError as e:
-        print(str(e))
+        # print(str(e))
         return False
 
 

@@ -9,7 +9,7 @@ class TestSemantics(object):
     def analyze(string: str):
         parse = parser.parse(lexer.lex(string))
         assert parse is not None  # make sure the program is grammatically valid
-        return semantics.analyze(parse)
+        return semantics.analyze(parse) is not None
 
     @staticmethod
     def with_main(string: str) -> str:
@@ -21,7 +21,7 @@ class TestSemantics(object):
 class TestProgram(TestSemantics):
 
     def test_analyze_missing_program(self):
-        assert semantics.analyze(None) is False
+        assert semantics.analyze(None) is None
 
     def test_last_declaration_should_be_void_main_void(self):
         assert self.analyze('''void main(void) { }''') is True

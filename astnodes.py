@@ -15,6 +15,13 @@ class Type(Enum):
             'void': Type.VOID,
         }[kind]
 
+    def to_string(self):
+        return {
+            'INTEGER': 'int',
+            'FLOAT': 'float',
+            'VOID': 'void',
+        }[self.name]
+
 
 # Expression
 

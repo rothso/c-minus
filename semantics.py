@@ -3,16 +3,13 @@ from typing import Dict
 from astnodes import *
 
 
-def analyze(program: Optional[Program]) -> bool:
+def analyze(program: Optional[Program]) -> Optional[Program]:
     try:
         if program is not None:
             SemanticAnalyzer().visit_program(program)
-            return True
-        else:
-            return False
-    except ValueError as e:
-        # print(str(e))
-        return False
+    except ValueError:
+        return None
+    return program
 
 
 class SemanticAnalyzer:

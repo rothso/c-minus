@@ -20,7 +20,7 @@ class CodeGenerator:
         return f'_t{self.temp}'
 
     def program(self, program: Program) -> List[Quadruple]:
-        return [(q[0], q[1], q[2], str(q[3] + i)) if q[0].startswith('br') else q for i, q in
+        return [(q[0], q[1], q[2], str(q[3] + i + 1)) if q[0].startswith('br') else q for i, q in
                 enumerate([q for d in program.declarations for q in self.declaration(d)])]
 
     def declaration(self, dec: Declaration) -> List[Quadruple]:
@@ -61,8 +61,8 @@ class CodeGenerator:
     def while_statement(self, stmt: WhileStatement) -> List[Quadruple]:
         cond, variable = self.expression(stmt.cond)
         body = self.statement(stmt.body)
-        jump = ('brleq', None, variable, len(body) + 3)
-        br = ('br', None, None, -(len(body) + len(cond)))
+        jump = ('brleq', None, variable, len(body) + 2)
+        br = ('br', None, None, -(len(body) + len(cond) + 1))
         return cond + [jump] + body + [br]
 
     def expression(self, expr: Expression) -> (List[Quadruple], str):

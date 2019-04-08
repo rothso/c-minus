@@ -44,3 +44,32 @@ class TestCodegen(object):
             ('br', None, None, '6'),
             ('end', 'func', 'main', None),
         ]
+
+    def test_sample_program_2(self):
+        assert self.to_ir('''
+        int sub(int z) {
+           if (x > y) return(z+z); else x = 5;
+        }
+        void main(void) {
+          int x; int y;
+          y = sub(x);
+        }
+        ''') == [
+            ('func', 'sub', 'int', '1'),
+            ('param', None, None, 'z'),
+            ('alloc', 4, None, 'z'),
+            ('comp', 'x', 'y', '_t0'),
+            ('brle', '_t0', None, '10'),
+            ('add', 'z', 'z', '_t1'),
+            ('return', None, None, '_t1'),
+            ('br', None, None, '11'),
+            ('assign', None, '5', 'x'),
+            ('end', 'func', 'sub', None),
+            ('func', 'main', 'void', '0'),
+            ('alloc', '4', None, 'x'),
+            ('alloc', '4', None, 'y'),
+            ('arg', None, None, 'x'),
+            ('call', 'sub', '1', '_t2'),
+            ('assign', '_t2', None, 'y'),
+            ('end', 'func', 'main', None),
+        ]

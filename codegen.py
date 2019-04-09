@@ -37,11 +37,11 @@ class CodeGenerator:
 
     def fun_declaration(self, dec: FunDeclaration) -> List[Quadruple]:
         func = ('func', dec.name, dec.type.to_string(), str(len(dec.params or [])))
-        # params = [('alloc', '4', None, p.name) for p in dec.params or []]
-        params = []  # TODO
+        params = [('param', None, None, p.name) for p in dec.params or []]
+        allocs = [('alloc', '4', None, p.name) for p in dec.params or []]
         body = self.compound_statement(dec.body)
         end = ('end', 'func', dec.name, None)
-        return [func] + params + body + [end]
+        return [func] + params + allocs + body + [end]
 
     def compound_statement(self, stmt: CompoundStatement) -> List[Quadruple]:
         variables = [self.var_declaration(dec) for dec in stmt.vars]
@@ -55,15 +55,36 @@ class CodeGenerator:
             block_start = ('block', None, None, None)
             block_end = ('end', 'block', None, None)
             return [block_start] + self.compound_statement(stmt) + [block_end]
+        elif isinstance(stmt, IfStatement):
+            return self.if_statement(stmt)
         elif isinstance(stmt, WhileStatement):
             return self.while_statement(stmt)
+        elif isinstance(stmt, ReturnStatement):
+            return self.return_statement(stmt)
+
+    def if_statement(self, stmt: IfStatement) -> List[Quadruple]:
+        cond, variable = self.expression(stmt.cond)
+        true = self.statement(stmt.true)
+        false = self.statement(stmt.false) if stmt.false is not None else []
+        jump_else = ('brle', variable, None, len(true) + 2)
+        jump_end = ('br', None, None, len(false) + 1)
+        return cond + [jump_else] + true + [jump_end] + false
 
     def while_statement(self, stmt: WhileStatement) -> List[Quadruple]:
         cond, variable = self.expression(stmt.cond)
         body = self.statement(stmt.body)
-        jump = ('brleq', None, variable, len(body) + 2)
+        jump = ('brleq', variable, None, len(body) + 2)
         br = ('br', None, None, -(len(body) + len(cond) + 1))
         return cond + [jump] + body + [br]
+
+    def return_statement(self, stmt: ReturnStatement) -> List[Quadruple]:
+        if stmt.expression is not None:
+            rhs, variable = self.expression(stmt.expression)
+            ret = ('return', None, None, variable)
+            return rhs + [ret]
+        else:
+            ret = ('return', None, None, None)
+            return [ret]
 
     def expression(self, expr: Expression) -> (List[Quadruple], str):
         if isinstance(expr, BinaryOp):
@@ -83,6 +104,12 @@ class CodeGenerator:
             dest = expr.var.name
             rhs, r_source = self.expression(expr.value)
             return rhs + [('assign', r_source, None, dest)], dest
+        elif isinstance(expr, Call):
+            exprs = [self.expression(arg) for arg in expr.args]
+            args = [('arg', None, None, var) for _, var in exprs]
+            dest = self.next_temp()
+            call = ('call', expr.name, str(len(args)), dest)
+            return [q for quad, _ in exprs for q in quad] + args + [call], dest
         elif isinstance(expr, Variable):
             return [], expr.name
         elif isinstance(expr, Number):

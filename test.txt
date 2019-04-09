@@ -1,7 +1,8 @@
+int sub(int z) {
+  int x; int y;
+   if (x > y) return(z+z); else x = 5;
+}
 void main(void) {
-  int x; int y; int z; int m;
-  while(x + 3 * y > 5) {
-    x = y + m / z;
-    m = x - y + z * m / z;
-  }
+  int x; int y;
+  y = sub(x);
 }

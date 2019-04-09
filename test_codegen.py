@@ -30,7 +30,7 @@ class TestCodegen(object):
             ('mult', '3', 'y', '_t0'),
             ('add', 'x', '_t0', '_t1'),
             ('comp', '_t1', '5', '_t2'),
-            ('brleq', None, '_t2', '21'),
+            ('brleq', '_t2', None, '21'),
             ('block', None, None, None),
             ('div', 'm', 'z', '_t3'),
             ('add', 'y', '_t3', '_t4'),
@@ -48,7 +48,8 @@ class TestCodegen(object):
     def test_sample_program_2(self):
         assert self.to_ir('''
         int sub(int z) {
-           if (x > y) return(z+z); else x = 5;
+          int x; int y;
+          if (x > y) return(z+z); else x = 5;
         }
         void main(void) {
           int x; int y;
@@ -57,13 +58,15 @@ class TestCodegen(object):
         ''') == [
             ('func', 'sub', 'int', '1'),
             ('param', None, None, 'z'),
-            ('alloc', 4, None, 'z'),
+            ('alloc', '4', None, 'z'),
+            ('alloc', '4', None, 'x'),
+            ('alloc', '4', None, 'y'),
             ('comp', 'x', 'y', '_t0'),
-            ('brle', '_t0', None, '10'),
+            ('brle', '_t0', None, '11'),
             ('add', 'z', 'z', '_t1'),
             ('return', None, None, '_t1'),
-            ('br', None, None, '11'),
-            ('assign', None, '5', 'x'),
+            ('br', None, None, '12'),
+            ('assign', '5', None, 'x'),
             ('end', 'func', 'sub', None),
             ('func', 'main', 'void', '0'),
             ('alloc', '4', None, 'x'),

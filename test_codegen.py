@@ -76,3 +76,20 @@ class TestCodegen(object):
             ('assign', '_t2', None, 'y'),
             ('end', 'func', 'main', None),
         ]
+
+    def test_sample_project_3(self):
+        assert self.to_ir('''
+        void main(void) {
+           int x[10]; int y;
+           y = (x[5] + 2) * y;
+        }
+        ''') == [
+            ('func', 'main', 'void', '0'),
+            ('alloc', '40', None, 'x'),
+            ('alloc', '4', None, 'y'),
+            ('disp', 'x', '20', '_t0'),
+            ('add', '_t0', '2', '_t1'),
+            ('mult', '_t1', 'y', '_t2'),
+            ('assign', '_t2', None, 'y'),
+            ('end', 'func', 'main', None),
+        ]

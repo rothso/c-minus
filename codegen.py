@@ -33,7 +33,7 @@ class CodeGenerator:
 
     @staticmethod
     def var_declaration(dec: VarDeclaration) -> Quadruple:
-        return 'alloc', '4' * (dec.array or 1), None, dec.name
+        return 'alloc', str(4 * (dec.array or Number(1)).value), None, dec.name
 
     def fun_declaration(self, dec: FunDeclaration) -> List[Quadruple]:
         func = ('func', dec.name, dec.type.to_string(), str(len(dec.params or [])))
@@ -111,6 +111,17 @@ class CodeGenerator:
             call = ('call', expr.name, str(len(args)), dest)
             return [q for quad, _ in exprs for q in quad] + args + [call], dest
         elif isinstance(expr, Variable):
+            if expr.index is not None:
+                index, variable = self.expression(expr.index)
+                temp = self.next_temp()
+                if variable.isdigit():
+                    disp = ('disp', expr.name, str(int(variable) * 4), temp)
+                    return index + [disp], temp
+                else:
+                    temp2 = self.next_temp()
+                    mult = ('mult', variable, '4', temp)
+                    disp = ('disp', expr.name, temp, temp2)
+                    return index + [mult, disp], temp2
             return [], expr.name
         elif isinstance(expr, Number):
             return [], str(expr.value)

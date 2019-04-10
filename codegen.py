@@ -39,22 +39,22 @@ class CodeGenerator:
         func = ('func', dec.name, dec.type.to_string(), str(len(dec.params or [])))
         params = [('param', None, None, p.name) for p in dec.params or []]
         allocs = [('alloc', '4', None, p.name) for p in dec.params or []]
-        body = self.compound_statement(dec.body)
+        quads = self.compound_statement(dec.body)
         end = ('end', 'func', dec.name, None)
-        return [func] + params + allocs + body + [end]
+        return [func] + params + allocs + quads + [end]
 
     def compound_statement(self, stmt: CompoundStatement) -> List[Quadruple]:
-        variables = [self.var_declaration(dec) for dec in stmt.vars]
-        body = [quad for stmt in stmt.body for quad in self.statement(stmt)]
-        return variables + body
+        allocs = [self.var_declaration(dec) for dec in stmt.vars]
+        quads = [quad for stmt in stmt.body for quad in self.statement(stmt)]
+        return allocs + quads
 
     def statement(self, stmt: Statement) -> List[Quadruple]:
         if isinstance(stmt, ExpressionStatement):
             return self.expression(stmt.expression)[0]
         elif isinstance(stmt, CompoundStatement):
-            block_start = ('block', None, None, None)
-            block_end = ('end', 'block', None, None)
-            return [block_start] + self.compound_statement(stmt) + [block_end]
+            block = ('block', None, None, None)
+            end = ('end', 'block', None, None)
+            return [block] + self.compound_statement(stmt) + [end]
         elif isinstance(stmt, IfStatement):
             return self.if_statement(stmt)
         elif isinstance(stmt, WhileStatement):
@@ -63,65 +63,71 @@ class CodeGenerator:
             return self.return_statement(stmt)
 
     def if_statement(self, stmt: IfStatement) -> List[Quadruple]:
-        cond, variable = self.expression(stmt.cond)
+        cond, ref = self.expression(stmt.cond)
         true = self.statement(stmt.true)
         false = self.statement(stmt.false) if stmt.false is not None else []
-        jump_else = ('brle', variable, None, len(true) + 2)
+        jump_else = ('brle', ref, None, len(true) + 2)
         jump_end = ('br', None, None, len(false) + 1)
         return cond + [jump_else] + true + [jump_end] + false
 
     def while_statement(self, stmt: WhileStatement) -> List[Quadruple]:
-        cond, variable = self.expression(stmt.cond)
-        body = self.statement(stmt.body)
-        jump = ('brleq', variable, None, len(body) + 2)
-        br = ('br', None, None, -(len(body) + len(cond) + 1))
-        return cond + [jump] + body + [br]
+        cond, ref = self.expression(stmt.cond)
+        quads = self.statement(stmt.body)
+        jump_end = ('brleq', ref, None, len(quads) + 2)
+        jump_loop = ('br', None, None, -(len(quads) + len(cond) + 1))
+        return cond + [jump_end] + quads + [jump_loop]
 
     def return_statement(self, stmt: ReturnStatement) -> List[Quadruple]:
         if stmt.expression is not None:
-            rhs, variable = self.expression(stmt.expression)
-            ret = ('return', None, None, variable)
-            return rhs + [ret]
+            rhs, ref = self.expression(stmt.expression)
+            return_fun = ('return', None, None, ref)
+            return rhs + [return_fun]
         else:
-            ret = ('return', None, None, None)
-            return [ret]
+            return_fun = ('return', None, None, None)
+            return [return_fun]
 
     def expression(self, expr: Expression) -> (List[Quadruple], str):
         if isinstance(expr, BinaryOp):
-            mathops = {'+': 'add', '-': 'sub', '*': 'mult', '/': 'div'}
-
-            lhs, l_source = self.expression(expr.lhs)
-            rhs, r_source = self.expression(expr.rhs)
-            dest = self.next_temp()
-
-            if expr.op in mathops.keys():
-                quad = (mathops[expr.op], l_source, r_source, dest)
-            else:
-                quad = ('comp', l_source, r_source, dest)
-
-            return lhs + rhs + [quad], dest
+            return self.binary_op(expr)
         elif isinstance(expr, AssignmentExpression):
-            dest = expr.var.name
-            rhs, r_source = self.expression(expr.value)
-            return rhs + [('assign', r_source, None, dest)], dest
+            return self.assignment_expression(expr)
         elif isinstance(expr, Call):
-            exprs = [self.expression(arg) for arg in expr.args]
-            args = [('arg', None, None, var) for _, var in exprs]
-            dest = self.next_temp()
-            call = ('call', expr.name, str(len(args)), dest)
-            return [q for quad, _ in exprs for q in quad] + args + [call], dest
+            return self.call_expression(expr)
         elif isinstance(expr, Variable):
-            if expr.index is not None:
-                index, variable = self.expression(expr.index)
-                temp = self.next_temp()
-                if variable.isdigit():
-                    disp = ('disp', expr.name, str(int(variable) * 4), temp)
-                    return index + [disp], temp
-                else:
-                    temp2 = self.next_temp()
-                    mult = ('mult', variable, '4', temp)
-                    disp = ('disp', expr.name, temp, temp2)
-                    return index + [mult, disp], temp2
-            return [], expr.name
+            return self.variable(expr)
         elif isinstance(expr, Number):
             return [], str(expr.value)
+
+    def binary_op(self, expr) -> (List[Quadruple], str):
+        mathops = {'+': 'add', '-': 'sub', '*': 'mult', '/': 'div'}
+        lhs, lref = self.expression(expr.lhs)
+        rhs, rref = self.expression(expr.rhs)
+        ref = self.next_temp()
+        op = (mathops[expr.op] if expr.op in mathops else 'comp', lref, rref, ref)
+        return lhs + rhs + [op], ref
+
+    def assignment_expression(self, expr) -> (List[Quadruple], str):
+        rhs, rref = self.expression(expr.value)
+        assign = [('assign', rref, None, expr.var.name)]
+        return rhs + assign, expr.var.name
+
+    def variable(self, expr) -> (List[Quadruple], str):
+        if expr.index is not None:
+            index, ref = self.expression(expr.index)
+            dest = self.next_temp()
+            if ref.isdigit():
+                disp = ('disp', expr.name, str(int(ref) * 4), dest)
+                return index + [disp], dest
+            else:
+                dest2 = self.next_temp()
+                mult = ('mult', ref, '4', dest)
+                disp = ('disp', expr.name, dest, dest2)
+                return index + [mult, disp], dest2
+        return [], expr.name
+
+    def call_expression(self, expr) -> (List[Quadruple], str):
+        quads = [self.expression(arg) for arg in expr.args]
+        args = [('arg', None, None, var) for _, var in quads]
+        ref = self.next_temp()
+        call = ('call', expr.name, str(len(args)), ref)
+        return [q for quad, _ in quads for q in quad] + args + [call], ref

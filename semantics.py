@@ -64,7 +64,7 @@ class SemanticAnalyzer:
 
         # The last declaration should be "void main(void)"
         d = program.declarations[-1]
-        if not (isinstance(d, FunDeclaration) and d.type == Type.VOID and d.params is None):
+        if not (isinstance(d, FunDeclaration) and d.name == "main" and d.type == Type.VOID and not d.params):
             raise ValueError('Last declaration should be void main(void)')
 
     def visit_declaration(self, declaration: Declaration):
@@ -86,7 +86,7 @@ class SemanticAnalyzer:
 
     def visit_fun_declaration(self, declaration: FunDeclaration):
         self.insert_fun(declaration)
-        for param in declaration.params or []:
+        for param in declaration.params:
             self.visit_param(param)
 
         # Functions not declared void must return values of the correct type
@@ -182,7 +182,7 @@ class SemanticAnalyzer:
             if function is None:
                 raise ValueError(f'Function {expr.name} has not been defined')
             # Function parameters and arguments must agree in number and type
-            expected = [(p.type, p.is_array) for p in function.params or []]
+            expected = [(p.type, p.is_array) for p in function.params]
             actual = [self.visit_expression(e) for e in expr.args]
             if expected != actual:
                 raise ValueError(f'Parameter mismatch when calling function {expr.name}')

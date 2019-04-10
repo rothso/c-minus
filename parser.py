@@ -100,7 +100,7 @@ class CMinusParser:
         return Type.from_string(self.union(['int', 'float', 'void']))
 
     # params -> int ID param' param-list | float ID param' param-list | void ID param' param-list | void
-    def params(self) -> Optional[List[ParamFormal]]:
+    def params(self) -> List[ParamFormal]:
         if self.next().val in ['int', 'float']:
             return self.param_list([self.param()])
         else:
@@ -108,7 +108,7 @@ class CMinusParser:
             if self.next().type == 'ID':
                 param = ParamFormal(Type.VOID, self.id(), self.param_())
                 return self.param_list([param])
-        return None
+            return []
 
     # param-list' -> , param param-list | ϵ
     def param_list(self, params: List[ParamFormal]) -> List[ParamFormal]:

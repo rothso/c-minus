@@ -36,9 +36,9 @@ class CodeGenerator:
         return 'alloc', str(4 * (dec.array or Number(1)).value), None, dec.name
 
     def fun_declaration(self, dec: FunDeclaration) -> List[Quadruple]:
-        func = ('func', dec.name, dec.type.to_string(), str(len(dec.params or [])))
-        params = [('param', None, None, p.name) for p in dec.params or []]
-        allocs = [('alloc', '4', None, p.name) for p in dec.params or []]
+        func = ('func', dec.name, dec.type.to_string(), str(len(dec.params)))
+        params = [('param', None, None, p.name) for p in dec.params]
+        allocs = [('alloc', '4', None, p.name) for p in dec.params]
         quads = self.compound_statement(dec.body)
         end = ('end', 'func', dec.name, None)
         return [func] + params + allocs + quads + [end]
@@ -50,7 +50,7 @@ class CodeGenerator:
 
     def statement(self, stmt: Statement) -> List[Quadruple]:
         if isinstance(stmt, ExpressionStatement):
-            return self.expression(stmt.expression)[0]
+            return self.expression(stmt.expression)[0] if stmt.expression is not None else []
         elif isinstance(stmt, CompoundStatement):
             block = ('block', None, None, None)
             end = ('end', 'block', None, None)

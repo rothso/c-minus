@@ -117,7 +117,7 @@ class ParamFormal:
 
 
 class FunDeclaration(Declaration):
-    def __init__(self, kind: Type, name: str, params: Optional[List[ParamFormal]],
+    def __init__(self, kind: Type, name: str, params: List[ParamFormal],
                  body: CompoundStatement):
         super().__init__(kind, name)
         self.params = params

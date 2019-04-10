@@ -26,7 +26,7 @@ class TestProgram(TestSemantics):
     def test_last_declaration_should_be_void_main_void(self):
         assert self.analyze('''void main(void) { }''') is True
         assert self.analyze('''int main(void) { return 2; }''') is False
-        assert self.analyze('''int f(void) { return 2; }''') is False
+        assert self.analyze('''void f(void) { }''') is False
 
 
 class TestArrays(TestSemantics):

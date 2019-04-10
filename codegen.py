@@ -14,10 +14,23 @@ class CodeGenerator:
     def __init__(self):
         self.ir: List[Quadruple] = []
         self.temp = -1  # temporary variable counter
+        self.last_equality_op = None
 
     def next_temp(self) -> str:
         self.temp += 1
         return f'_t{self.temp}'
+
+    def next_jump(self):
+        jump = self.last_equality_op
+        self.last_equality_op = None
+        return {
+            '>': 'brle',
+            '<': 'brge',
+            '>=': 'brl',
+            '<=': 'brg',
+            '==': 'brne',
+            '!=': 'bre',
+        }.get(jump)
 
     def program(self, program: Program) -> List[Quadruple]:
         return [(q[0], q[1], q[2], str(q[3] + i + 1)) if q[0].startswith('br') else q for i, q in
@@ -62,18 +75,29 @@ class CodeGenerator:
         elif isinstance(stmt, ReturnStatement):
             return self.return_statement(stmt)
 
+    def _patch_comparison(self, expression: (List[Quadruple], str)) -> (List[Quadruple], str):
+        # If the condition in an if/while does not use an equality op, compare the expression to 0
+        cond, ref = expression
+        if self.last_equality_op is None:
+            ref2 = self.next_temp()
+            self.last_equality_op = ">"
+            return cond + [('comp', ref, '0', ref2)], ref2
+        return expression
+
     def if_statement(self, stmt: IfStatement) -> List[Quadruple]:
-        cond, ref = self.expression(stmt.cond)
+        cond, ref = self._patch_comparison(self.expression(stmt.cond))
+        jump = self.next_jump()
         true = self.statement(stmt.true)
         false = self.statement(stmt.false) if stmt.false is not None else []
-        jump_else = ('brle', ref, None, len(true) + 2)
+        jump_else = (jump, ref, None, len(true) + 2)
         jump_end = ('br', None, None, len(false) + 1)
         return cond + [jump_else] + true + [jump_end] + false
 
     def while_statement(self, stmt: WhileStatement) -> List[Quadruple]:
-        cond, ref = self.expression(stmt.cond)
+        cond, ref = self._patch_comparison(self.expression(stmt.cond))
+        jump = self.next_jump()
         quads = self.statement(stmt.body)
-        jump_end = ('brleq', ref, None, len(quads) + 2)
+        jump_end = (jump, ref, None, len(quads) + 2)
         jump_loop = ('br', None, None, -(len(quads) + len(cond) + 1))
         return cond + [jump_end] + quads + [jump_loop]
 
@@ -103,7 +127,10 @@ class CodeGenerator:
         lhs, lref = self.expression(expr.lhs)
         rhs, rref = self.expression(expr.rhs)
         ref = self.next_temp()
-        op = (mathops[expr.op] if expr.op in mathops else 'comp', lref, rref, ref)
+        is_mathop = expr.op in mathops
+        op = (mathops[expr.op] if is_mathop else 'comp', lref, rref, ref)
+        if not is_mathop:
+            self.last_equality_op = expr.op
         return lhs + rhs + [op], ref
 
     def assignment_expression(self, expr) -> (List[Quadruple], str):

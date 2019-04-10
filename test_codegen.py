@@ -30,7 +30,7 @@ class TestCodegen(object):
             ('mult', '3', 'y', '_t0'),
             ('add', 'x', '_t0', '_t1'),
             ('comp', '_t1', '5', '_t2'),
-            ('brleq', '_t2', None, '21'),
+            ('brle', '_t2', None, '21'),
             ('block', None, None, None),
             ('div', 'm', 'z', '_t3'),
             ('add', 'y', '_t3', '_t4'),

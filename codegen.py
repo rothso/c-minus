@@ -122,7 +122,7 @@ class CodeGenerator:
         elif isinstance(expr, Number):
             return [], str(expr.value)
 
-    def binary_op(self, expr) -> (List[Quadruple], str):
+    def binary_op(self, expr: BinaryOp) -> (List[Quadruple], str):
         mathops = {'+': 'add', '-': 'sub', '*': 'mult', '/': 'div'}
         lhs, lref = self.expression(expr.lhs)
         rhs, rref = self.expression(expr.rhs)
@@ -133,12 +133,13 @@ class CodeGenerator:
             self.last_equality_op = expr.op
         return lhs + rhs + [op], ref
 
-    def assignment_expression(self, expr) -> (List[Quadruple], str):
+    def assignment_expression(self, expr: AssignmentExpression) -> (List[Quadruple], str):
         rhs, rref = self.expression(expr.value)
-        assign = [('assign', rref, None, expr.var.name)]
-        return rhs + assign, expr.var.name
+        lhs, lref = self.variable(expr.var)
+        assign = ('assign', rref, None, lref)
+        return rhs + lhs + [assign], lref
 
-    def variable(self, expr) -> (List[Quadruple], str):
+    def variable(self, expr: Variable) -> (List[Quadruple], str):
         if expr.index is not None:
             index, ref = self.expression(expr.index)
             dest = self.next_temp()
@@ -152,7 +153,7 @@ class CodeGenerator:
                 return index + [mult, disp], dest2
         return [], expr.name
 
-    def call_expression(self, expr) -> (List[Quadruple], str):
+    def call_expression(self, expr: Call) -> (List[Quadruple], str):
         quads = [self.expression(arg) for arg in expr.args]
         args = [('arg', None, None, var) for _, var in quads]
         ref = self.next_temp()

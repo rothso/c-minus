@@ -77,7 +77,7 @@ class TestCodegen(object):
             ('end', 'func', 'main', None),
         ]
 
-    def test_sample_project_3(self):
+    def test_sample_program_3(self):
         assert self.to_ir('''
         void main(void) {
            int x[10]; int y;
@@ -91,5 +91,67 @@ class TestCodegen(object):
             ('add', '_t0', '2', '_t1'),
             ('mult', '_t1', 'y', '_t2'),
             ('assign', '_t2', None, 'y'),
+            ('end', 'func', 'main', None),
+        ]
+
+    def test_sample_quiz_10(self):
+        assert self.to_ir('''
+        int sub(int x) {
+          int y;
+          return (x + y);
+        }
+        void main(void) {
+          int x[8]; int y; int z; int w;
+          while (x[w] + y * z >= z * w) {
+            int p;
+            x[2] = p * z + w - p;
+          }
+          if (x[z] + 2 > y) y = x[0] * 5; else y = z - 1000;
+          x[4] = sub(w);
+        }
+        ''') == [
+            ('func', 'sub', 'int', '1'),
+            ('param', None, None, 'x'),
+            ('alloc', '4', None, 'x'),
+            ('alloc', '4', None, 'y'),
+            ('add', 'x', 'y', '_t0'),
+            ('return', None, None, '_t0'),
+            ('end', 'func', 'sub', None),
+            ('func', 'main', 'void', '0'),
+            ('alloc', '32', None, 'x'),
+            ('alloc', '4', None, 'y'),
+            ('alloc', '4', None, 'z'),
+            ('alloc', '4', None, 'w'),
+            ('mult', 'w', '4', '_t1'),  # 13
+            ('disp', 'x', '_t1', '_t2'),
+            ('mult', 'y', 'z', '_t3'),
+            ('add', '_t2', '_t3', '_t4'),
+            ('mult', 'z', 'w', '_t5'),
+            ('comp', '_t4', '_t5', '_t6'),
+            ('brl', '_t6', None, '29'),
+            ('block', None, None, None),
+            ('alloc', '4', None, 'p'),
+            ('mult', 'p', 'z', '_t7'),
+            ('add', '_t7', 'w', '_t8'),
+            ('sub', '_t8', 'p', '_t9'),
+            ('disp', 'x', '8', '_t10'),
+            ('assign', '_t9', None, '_t10'),
+            ('end', 'block', None, None),
+            ('br', None, None, '13'),
+            ('mult', 'z', '4', '_t11'),  # 29
+            ('disp', 'x', '_t11', '_t12'),
+            ('add', '_t12', '2', '_t13'),
+            ('comp', '_t13', 'y', '_t14'),
+            ('brle', '_t14', None, '38'),
+            ('disp', 'x', '0', '_t15'),
+            ('mult', '_t15', '5', '_t16'),
+            ('assign', '_t16', None, 'y'),
+            ('br', None, None, '40'),
+            ('sub', 'z', '1000', '_t17'),  # 38
+            ('assign', '_t17', None, 'y'),
+            ('arg', None, None, 'w'),  # 40
+            ('call', 'sub', '1', '_t18'),
+            ('disp', 'x', '16', '_t19'),
+            ('assign', '_t18', None, '_t19'),
             ('end', 'func', 'main', None),
         ]

@@ -1,6 +1,6 @@
 from typing import Dict
 
-from astnodes import *
+from .astnodes import *
 
 
 def analyze(program: Optional[Program]) -> Optional[Program]:
@@ -146,7 +146,6 @@ class SemanticAnalyzer:
             return True
         raise Exception('Unknown statement type')
 
-    # todo handle expression type
     def visit_expression(self, expr: Expression) -> (Type, bool):
         if isinstance(expr, BinaryOp):
             l_type, l_array = self.visit_expression(expr.lhs)

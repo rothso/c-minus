@@ -1,4 +1,4 @@
-import lexer
+import compiler.lexer as lexer
 
 
 class TestIntegers(object):

@@ -1,7 +1,7 @@
-import lexer
-import parser
-import semantics
-import codegen
+import compiler.lexer as lexer
+import compiler.parser as parser
+import compiler.semantics as semantics
+import compiler.codegen as codegen
 
 
 class TestCodegen(object):

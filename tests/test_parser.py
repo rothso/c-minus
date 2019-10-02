@@ -1,6 +1,6 @@
-import lexer
-import parser
-from astnodes import Program
+import compiler.lexer as lexer
+import compiler.parser as parser
+from compiler.astnodes import Program
 
 
 class TestParser(object):

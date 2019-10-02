@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from astnodes import *
+from .astnodes import *
 
 Quadruple = Tuple[str, Optional[str], Optional[str], Union[Optional[str], int]]
 

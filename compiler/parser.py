@@ -1,7 +1,7 @@
 from typing import Callable
 
-from astnodes import *
-from lexer import Token
+from .astnodes import *
+from .lexer import Token
 
 
 def parse(tokens: List[Token]) -> Optional[Program]:
@@ -247,7 +247,7 @@ class CMinusParser:
 
     # expression''' -> term' additive-expression' simple-expression
     def expression___(self, lhs: Expression) -> Expression:
-        lhs = self.term_(lhs)  # TODO unsure
+        lhs = self.term_(lhs)
         lhs = self.additive_expression_(lhs)
         return self.simple_expression(lhs)
 
@@ -268,7 +268,7 @@ class CMinusParser:
     def simple_expression(self, lhs: Expression) -> Expression:
         if self.next().type == 'RELOP':
             op = self.relop()
-            rhs = self.additive_expression()  # TODO double check tree
+            rhs = self.additive_expression()
             return BinaryOp(op, lhs, rhs)
         return lhs
 

@@ -1,6 +1,8 @@
 C- Compiler
 ===========================
-> A recursive descent parser for C- built for COP 4620.
+> A recursive descent compiler for C- built for COP 4620.
+
+<p align="center"><img src="screenshot.png?raw=true"/></p>
 
 ## Structure
 
